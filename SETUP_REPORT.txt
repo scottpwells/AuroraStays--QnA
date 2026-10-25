@@ -10,6 +10,10 @@ Retrieval improvement is complete and re-evaluated on Data/evaluation.csv.
 The frozen configuration has now completed one held-out test evaluation.
 Cells 129, 131, and 133 contain the test results. The test set was not used
 for tuning, and the frozen code, settings, sources, and index remain unchanged.
+Backend packaging is also complete: the Flask API uses the evaluated functions,
+the exported index is unchanged, and one live local HTTP/RAG check passed.
+The next guided section is the Streamlit frontend. Docker build/deployment is
+still unverified because Docker is not installed locally.
 See the verification results below for the limits of this preparation.
 
 NOTEBOOK AND INSTRUCTIONS
@@ -133,10 +137,9 @@ CODE ISSUES TRACKED DURING THE WALKTHROUGH
    expected answers, which are available in benchmark data but generally
    absent for new live queries. Resolve that evaluation/design distinction
    before claiming the deployed app scores every answer.
-4. Cell 144's generated backend prompt says 'medical insurance policies',
-   unlike the hotel-policy notebook prompt. Cell 161's UI example asks about
-   hospitalization waiting periods. These copied examples need correction
-   before deployment and the backend prompt should match the tested rules.
+4. PARTIALLY RESOLVED: cell 144 now exports the exact evaluated hotel-policy
+   prompt and hybrid retrieval functions. Cell 161's UI example still asks
+   about hospitalization waiting periods; correct that in the frontend step.
 5. Cell 178 imports google.colab.userdata, which is unavailable in ordinary
    local Jupyter. Replace that token-loading step with local secure input or
    a GITHUB_TOKEN environment variable when reaching deployment; do not try
@@ -144,14 +147,12 @@ CODE ISSUES TRACKED DURING THE WALKTHROUGH
 6. Cell 181 creates or updates a PUBLIC GitHub repository and uploads files.
    It also catches broad exceptions as though they mean 'not found'. Review
    the destination and exception handling before executing this later step.
-7. The frontend uses http://localhost:7860. Check that backend/frontend
-   container networking and port forwarding match the deployment guide.
-   Running backend app.py directly uses Flask's default port; the Docker
-   command explicitly uses 7860. Requests currently have no explicit timeout.
-8. The current notebook imports policy_retrieval.py for structured chunking
-   and hybrid retrieval. The later backend snippets still use their original
-   retrieval implementation. Align the backend and include this module when
-   reaching deployment so that it matches the evaluated notebook behavior.
+7. PARTIALLY RESOLVED: the backend now uses port 7860 for local startup and
+   Docker, with debug disabled. The frontend still needs its HTTP timeout and
+   deployment URL/networking review in the next guided step.
+8. RESOLVED: the backend includes byte-identical policy_retrieval.py, the
+   frozen index, and a deployment manifest. All 20 previously scored contexts
+   were reproduced exactly through the exported backend functions.
 
 PUBLIC RESOURCES AND DEPLOYMENT VERSION CHECKS
 HarishMaths/Hotel-Policy-Embedding is public and ungated. Metadata identifies
@@ -631,6 +632,104 @@ No additional dependency installation was needed.
 Notebook evaluation work is complete. Application serving, GitHub writes, and
 deployment remain later guided steps; none were executed in this stage.
 
+BACKEND PREPARATION COMPLETED
+Executed notebook cells 139, 140, 144, 147, 151, and 154. The notebook remains
+213 cells; the earlier evaluation/test outputs and frozen code are unchanged.
+The backend snippets required corrections to retain the evaluated behavior:
+the old template used dense-only retrieval, K=2, and a medical-insurance prompt.
+The original recommendation against changing deployment snippets is retained
+in cell 135; these changes reconcile the template with the tested notebook.
+
+Prepared backend_files/:
+  app.py: Flask application factory and the original three POST endpoint paths.
+  rag_utils.py: exact evaluated retrieve/generate functions; rag differs only
+    in reading credentials from environment variables instead of config.json.
+  policy_retrieval.py: byte-identical local hybrid-retrieval implementation.
+  faiss_index/index.faiss and index.pkl: byte-identical frozen checkpoint.
+  deployment_manifest.json: model/revision/settings, source hashes and exported
+    index/retrieval-module hashes, verified before loading the local docstore.
+  requirements.txt: pinned runtime libraries, including the explicit splitter
+    dependency and the evaluated Transformers/NumPy/CPU PyTorch versions.
+  Dockerfile and .dockerignore: explicit application file copies, exact model
+    revision cached at build time, CPU inference and offline model startup.
+
+The app loads the normalized 139-vector, 384-dimensional index once per worker,
+using embedding revision 3c9f67da8057fb1e9f742c9e6680d5a4b33b4dcd. It resolves
+the index relative to app.py, so startup does not depend on the shell directory.
+Defaults remain gpt-4o-mini, K=4, temperature=0, top_p=1, max_tokens=512,
+60-second provider timeout and zero SDK retries. Endpoints preserve their
+original response formats:
+  POST /v1/relevant_chunks: supporting policy contexts.
+  POST /v1/answer_with_relevant_chunks: answer, contexts and generation settings.
+  POST /v1/answer: answer only.
+Nonempty JSON queries and bounded, correctly typed parameters are required.
+Invalid requests return HTTP 400 without invoking the provider. Upstream
+generation failures return a sanitized HTTP 502 response. The API exposes
+generation; it does not run benchmark GEval/routing for new guest questions.
+Request overrides are supported as in the template; only the evaluated defaults
+have the reported benchmark results.
+
+The application factory permits offline route tests with an injected store.
+Gunicorn's entrypoint is app:create_app(), with one worker, port 7860 and a
+120-second timeout. The direct local launcher binds 127.0.0.1:7860 with debug
+disabled. GitHub/Codespace secrets supply OPENAI_API_KEY and OPENAI_API_BASE
+after deployment. The local launcher loads ignored config.json into its own
+process environment if those variables are not already set. Credentials were
+not copied into backend_files and are excluded from the Docker build context.
+
+Added four Windows packages for local backend checks:
+  Flask 3.1.3, Werkzeug 3.1.8, blinker 1.9.0, itsdangerous 2.2.0.
+All 230 earlier package versions were retained. The current notebook lock now
+contains 234 exact installed versions, and uv pip check reports all compatible.
+The original ten notebook installation pins are unchanged. The deployment
+requirements omit unused Uvicorn, explicitly include langchain-text-splitters
+1.1.2 and constrain Gunicorn to non-Windows platforms. Linux/Python 3.13.15 /
+x86_64 resolution succeeds with 91 binary-compatible packages and the evaluated
+embedding-runtime versions. The earlier template's unconstrained Transformers
+resolved to 5.20.2; the backend now explicitly retains notebook version 5.16.1.
+Resolution evidence: .cache/audit/backend-ready.lock.txt. This is a dependency
+resolution check, not a completed container build. Docker remains unavailable.
+
+Verification:
+  PASS all 15 tests: six API/parity tests plus nine existing retrieval regressions.
+       Checks include no paid calls for malformed inputs, exact default/nondefault
+       parameter forwarding, response contracts, sanitized errors, and AST-level
+       equality of the exported functions to their evaluated counterparts.
+  PASS actual backend index equality, unit-normalized vectors, and all 20 scored
+       context replays (ten development and ten test), with no rescoring/tuning.
+  PASS real /v1/relevant_chunks response with the Chicago fee and stay cap.
+  PASS local HTTP server: root HTTP 200, invalid answer request HTTP 400, and
+       one real /v1/answer_with_relevant_chunks request HTTP 200.
+       The answer states $50 per night, capped at $150 per stay, with a source
+       citation. Provider: gpt-4o-mini-2024-07-18, finish_reason=stop.
+       Token usage: 692 input, 47 output, 739 total; exactly one live API call.
+  PASS frozen pipeline, both scored result sets, notebook schema/exports,
+       credential scan, and backend source/index integrity.
+  PASS temporary HTTP server and notebook kernel shut down after verification.
+
+One initial combined-test run exposed a cache-setting import-order problem:
+the tokenizer check attempted a Hugging Face metadata request. It now specifies
+the local cache and local_files_only=True explicitly; the successful 15-test
+run required no network/model/API calls. No evaluated retrieval code changed.
+
+Cell 181's future upload list now includes the new retrieval module, manifest,
+and .dockerignore so that the later repository package is complete. Cell 181
+and the GitHub authentication/deployment steps were not executed. The frontend
+section remains unexecuted and unchanged. No Docker image was built or deployed.
+
+Evidence under .cache/notebook/backend_preparation/:
+  summary.json: exported-artifact hashes, 20 context matches and live HTTP answer.
+  final_audit.json: notebook/frozen-state/export/dependency/integrity checks.
+  tests.txt: successful 15-test output.
+  protected_file_hashes.json: prior frozen configuration and scored artifacts.
+  before-backend-preparation.ipynb and execution backups: preceding notebook state.
+  requirements-notebook.before.lock.txt: the original 230-package lock.
+Earlier stage audits remain historical records of the notebook at those stages;
+the current backend audit verifies the subsequent notebook changes separately.
+
+Next guided step: prepare and verify the Streamlit frontend. Container build,
+GitHub publication, Codespace secrets/networking, and deployment remain pending.
+
 HOW TO BEGIN
 From a PowerShell terminal in this project folder:
   .\scripts\start-notebook.ps1
@@ -642,6 +741,8 @@ Imports, Data Understanding, chunking, FAISS, generation, baseline evaluation,
 retrieval improvement, and the held-out test are complete. Review saved test
 results in cells 129-133. The frozen configuration was evaluated once and the
 test set was not used for tuning. Avoid rerunning it for further tuning.
+The backend files and local verification are also complete (cells 139-154).
+Continue with Deployment - Frontend (cell 156 onwards).
 On a fresh manual kernel,
 earlier cells must be run again to populate in-memory variables; cached
 documents, chunks, and FAISS are available for guided state restoration.
@@ -662,7 +763,7 @@ To resume the same evaluation run using saved work:
   .\.venv\Scripts\python.exe -u scripts/run-evaluation.py --resume
 To verify all ten scored contexts and freeze the current configuration offline:
   .\.venv\Scripts\python.exe -u scripts/verify-retrieval.py
-To run the nine retrieval regressions offline:
+To run all 15 API/retrieval regression tests offline:
   .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 Held-out runner (already complete; a new run is rejected):
   .\.venv\Scripts\python.exe -u scripts/run-test-evaluation.py
@@ -670,6 +771,17 @@ To resume interrupted held-out work only (not an already-complete run):
   .\.venv\Scripts\python.exe -u scripts/run-test-evaluation.py --resume
 To repeat the saved test-result audit/comparison offline with no API calls:
   .\.venv\Scripts\python.exe -u .cache/audit_test_evaluation.py
+  (This verifies the notebook at the completed test stage; after subsequent
+   backend changes, use the current backend audit instead.)
+To start the local backend (credentials from environment or ignored config.json):
+  .\.venv\Scripts\python.exe -u scripts/start-backend.py
+  Then use http://127.0.0.1:7860; stop with Ctrl+C.
+To verify the prepared backend and replay scored contexts without paid API calls:
+  .\.venv\Scripts\python.exe -u scripts/verify-backend.py
+To execute backend packaging and one live HTTP/RAG smoke request:
+  .\.venv\Scripts\python.exe -u scripts/run-backend.py --live
+To repeat the current backend artifact audit with no API calls:
+  .\.venv\Scripts\python.exe -u .cache/audit_backend.py
 
 PRIMARY REFERENCES
 Exact release metadata: https://pypi.org/pypi/<package>/<version>/json
@@ -698,3 +810,9 @@ Reciprocal rank fusion:
 https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking
 OpenAI Docs: held-out testing and LLM-judge alignment (methodology, not API changes):
 https://developers.openai.com/cookbook/examples/evaluation/building_resilient_prompts_using_an_evaluation_flywheel
+OpenAI Docs: server environment credentials and Python client behavior:
+https://developers.openai.com/api/reference/python
+Flask testing and local test clients:
+https://flask.palletsprojects.com/en/stable/testing/
+Flask/Gunicorn application-factory entrypoints and Windows limitation:
+https://flask.palletsprojects.com/en/stable/deploying/gunicorn/

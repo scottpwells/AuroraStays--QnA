@@ -1,0 +1,25 @@
+{
+  "embedding_model": "HarishMaths/Hotel-Policy-Embedding",
+  "embedding_revision": "3c9f67da8057fb1e9f742c9e6680d5a4b33b4dcd",
+  "vectors": 139,
+  "dimensions": 384,
+  "model": "gpt-4o-mini",
+  "parameters": {
+    "k": 4,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "max_tokens": 512
+  },
+  "frozen_evaluation_fingerprint": "178e21bb249d25b9f6ac1b540a77b2edf3194fb96b127fa595517d25fe6a4e68",
+  "artifact_hashes": {
+    "faiss_index/index.faiss": "9a4c25d8f15190e36bba1c66a8a5feb90c23013ebb81f54965c0c530f01beeb5",
+    "faiss_index/index.pkl": "c1fc995600a77a06e55ddc63d35539762aa4976bce73c896d662ad6239935149",
+    "policy_retrieval.py": "a7db594fa25f7570036d546c927f326421d700810b9241d9c1c736ed67a9a0a9"
+  },
+  "source_hashes": {
+    "Data/aurorastay_room_and_property_information.pdf": "86512b2ad3c68ab6ede9da1a1a8524a3b677eb5f3ffc719c1304a346243a7310",
+    "Data/aurorastay_refunds_and_additional_charges_guide.pdf": "2429e09c90d8e7a8ba2c9d4427d204238f8dc84faaad8284fdd880497087dfcf",
+    "Data/aurorastay_guest_conduct_accessibility_and_resolution_guidelines.pdf": "992165cf99aece93d3b9ae0cfea0aa2346394f3069a21bcf1a5137fd64e445ad",
+    "Data/aurorastay_booking_terms_and_cancellation_policy.pdf": "a4102254bb36c5c542e0cd661f1fd1c83744d02cbf9f1724ee633f068e621e8f"
+  }
+}

@@ -30,7 +30,10 @@ class AdversarialDenseStore:
 class PolicyRetrievalTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.tokenizer = AutoTokenizer.from_pretrained("HarishMaths/Hotel-Policy-Embedding")
+        cls.tokenizer = AutoTokenizer.from_pretrained(
+            "HarishMaths/Hotel-Policy-Embedding",
+            cache_dir=str(ROOT / ".cache/huggingface/hub"), local_files_only=True,
+        )
 
     def corpus(self):
         raw = [Document(page_content="""## Property profiles
