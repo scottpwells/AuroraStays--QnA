@@ -14791,7 +14791,97 @@ Next: review the deployment branch and configure Codespaces runtime secrets; see
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>--</p>
+<h2 id="Business-conclusion">Business conclusion<a class="anchor-link" href="#Business-conclusion">¶</a></h2><p>AuroraStays has a working proof of concept for an <strong>internal, staff-assisted policy desk</strong>. The results support a controlled pilot focused on answering policy questions from the supplied documents, with sources available for staff review. They do not yet establish a reduction in real staff lookups, a production error rate, or readiness for unsupervised guest-facing use.</p>
+<p>The business priority remains <strong>reducing the proportion of queries requiring separate manual document searches or escalation</strong>, rather than claiming shorter handling times. Consistent access to approved policy evidence could also help onboarding in a business with the stated 45% annual staff turnover; that benefit still needs operational measurement.</p>
+<h2 id="What-the-completed-evaluation-tells-us">What the completed evaluation tells us<a class="anchor-link" href="#What-the-completed-evaluation-tells-us">¶</a></h2><p>The retrieval configuration was improved using the 10-question development set, frozen, and then evaluated on 10 held-out questions with <code>gpt-4o-mini</code> generating answers and <code>gpt-4o</code> judging them. The evaluated defaults were <strong>K = 4, temperature = 0, top_p = 1, and max_tokens = 512</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Quality measure</th>
+<th style="text-align:right">Development mean</th>
+<th style="text-align:right">Held-out mean</th>
+<th style="text-align:right">Required threshold</th>
+<th style="text-align:right">Held-out cases passing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Faithfulness</td>
+<td style="text-align:right">0.9887</td>
+<td style="text-align:right">0.9951</td>
+<td style="text-align:right">0.85</td>
+<td style="text-align:right">10/10</td>
+</tr>
+<tr>
+<td>Contextual recall</td>
+<td style="text-align:right">0.9364</td>
+<td style="text-align:right">0.9581</td>
+<td style="text-align:right">0.80</td>
+<td style="text-align:right">10/10</td>
+</tr>
+<tr>
+<td>Contextual precision</td>
+<td style="text-align:right">0.8088</td>
+<td style="text-align:right">0.8285</td>
+<td style="text-align:right">0.75</td>
+<td style="text-align:right">8/10</td>
+</tr>
+<tr>
+<td>Answer relevancy</td>
+<td style="text-align:right">0.9643</td>
+<td style="text-align:right">0.9143</td>
+<td style="text-align:right">0.75</td>
+<td style="text-align:right">9/10</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Source grounding is the strongest result.</strong> All held-out questions passed the faithfulness and recall thresholds, supporting the use of retrieved policy evidence for staff guidance. High judge scores do not prove that every answer is complete or that the underlying policies are current.</li>
+<li><strong>Retrieval precision is the main improvement opportunity.</strong> It had the lowest mean score and two cases below threshold. The Atlanta/Miami parking question retrieved the requested fees along with unrelated Boston/Denver material. More selective retrieval could reduce distraction and incorrect cross-property interpretation.</li>
+<li><strong>A grounded answer can still miss the user's need.</strong> The Accessible King question scored 0.6900 for precision and 0.5659 for answer relevancy. The response did not resolve exactly which features were available. Staff should confirm the requested feature and the live room/property profile, rather than infer details absent from the documents. The judge's desire for more detail is not a reason to invent amenities.</li>
+<li><strong>Composite routing can conceal individual weaknesses.</strong> The mean held-out composite was <strong>0.9364</strong>, and all 10 cases received the offline <strong>AUTO ANSWER</strong> label at the 0.75 cutoff, exceeding the benchmark's 50% target. However, only <strong>8/10 passed every metric</strong>; even the Accessible King response passed the composite cutoff. Therefore, the 100% offline routing rate is not a demonstrated 100% safe-resolution rate.</li>
+</ul>
+<p>These are small, LLM-judged samples. Answer relevancy fell from 0.9643 on development to 0.9143 on held-out questions, so averages alone should not justify broad rollout. The deployed app does <strong>not</strong> calculate these evaluation scores or automatically enforce the notebook's routing rule for new questions; contextual recall in this evaluation requires a reference answer unavailable in normal use.</p>
+<h2 id="Prioritized-recommendations">Prioritized recommendations<a class="anchor-link" href="#Prioritized-recommendations">¶</a></h2><ol>
+<li><p><strong>Start with a supervised front-desk pilot.</strong> Operations should select properties and question types covered by the supplied policies, retain the evaluated defaults, and use <strong>Answer with sources</strong>. Staff should check the evidence before communicating an answer. Record whether the app resolved the query or a separate search/escalation was needed. Local Docker and private Codespaces verification demonstrate that the application runs; staff acceptance and business impact remain to be validated.</p>
+</li>
+<li><p><strong>Keep policy exceptions and missing information under human control.</strong> Require manual confirmation for unsupported properties, ambiguous rate plans, refund exceptions, disputed charges, and room/accessibility features requiring live confirmation. Where evidence is missing or conflicting, ask a clarifying question or escalate. Any future automatic fallback mechanism should be validated on new development data; the offline composite score must not be presented as live confidence.</p>
+</li>
+<li><p><strong>Improve precision before expanding scope.</strong> The technical owner should investigate property/topic filtering, duplicate or unrelated context, and selective reranking on new development examples. Include questions spanning several properties, unknown locations, conditional fees, and incomplete room descriptions. Preserve the completed held-out results; after further tuning, assess the new configuration on a fresh independent test set. Do not claim that these proposed changes have already improved quality.</p>
+</li>
+<li><p><strong>Make policy maintenance an operational responsibility.</strong> Assign a policy owner to each document, record approval and effective dates, and define a review schedule. Confirm property coverage before extending the tool across all 18 hotels or adding the stated 3-4 new properties each year. Rebuild and validate the index and deployment manifest after approved content changes. The current four PDFs and frozen index are a policy snapshot, not a live reservation or property-management system.</p>
+</li>
+<li><p><strong>Measure value and cost before committing to wider deployment.</strong> Train staff to verify property, booking channel, rate plan, and policy conditions. Capture staff feedback, corrections, escalations, API usage, and operating costs, while excluding credentials and unnecessary guest personal data. Use the results to decide whether the pilot should expand, remain limited, or return for improvement.</p>
+</li>
+</ol>
+<h2 id="Pilot-scorecard-and-rollout-decision">Pilot scorecard and rollout decision<a class="anchor-link" href="#Pilot-scorecard-and-rollout-decision">¶</a></h2><table>
+<thead>
+<tr>
+<th>Measure</th>
+<th>How to use it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Validated resolution without separate lookup</td>
+<td>Primary target: at least 50% of eligible pilot queries are correctly resolved using the app's answer and supplied evidence, without another document search or escalation. Audit correctness and report excluded/out-of-scope queries separately.</td>
+</tr>
+<tr>
+<td>Quality by property and question type</td>
+<td>Have policy owners review answers and citations; track unsupported claims, missed conditions, wrong-property information, and cases failing each quality threshold. A high composite must not hide a failed quality measure.</td>
+</tr>
+<tr>
+<td>Escalation and correction reasons</td>
+<td>Distinguish missing/outdated policy, irrelevant retrieval, ambiguous questions, live-information needs, and generation errors so each issue has an owner.</td>
+</tr>
+<tr>
+<td>Coverage, reliability, and cost</td>
+<td>Track supported properties/policies, service failures, response latency, and cost per validated resolution. Compare with the existing manual process before making savings or return-on-investment claims.</td>
+</tr>
+</tbody>
+</table>
+<p>For scale only, the stated <strong>1,200 weekly queries x 40% complex share = about 480 complex queries per week</strong>. If the 50% resolution target were achieved across that entire complex-query cohort, about <strong>240 queries per week</strong> could avoid a separate lookup. This is a planning illustration, not an observed outcome or a forecast; actual eligibility, adoption, correctness, and escalation needs must be measured.</p>
+<p><strong>Recommendation:</strong> proceed with the limited internal pilot. Broader rollout should depend on meeting the validated-resolution target, satisfying the existing quality thresholds in independent assessment, policy-owner approval of coverage and escalation controls, and acceptable operating cost. Keep the current held-out evaluation as the recorded baseline.</p>
 </div>
 </div>
 </div>

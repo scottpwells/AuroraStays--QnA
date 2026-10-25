@@ -18,7 +18,8 @@ REPOSITORY = "scottpwells/AuroraStays--QnA"
 BRANCH = "codespaces-deployment"
 FILES = (
     ".gitignore", ".devcontainer/devcontainer.json", ".devcontainer/Dockerfile", ".github/workflows/deployment-check.yml",
-    "compose.yaml", "DEPLOYMENT.txt", "Full_Code_Notebook.ipynb", "SETUP_REPORT.txt",
+    "compose.yaml", "README.md", "LICENSE", "DEPLOYMENT.txt",
+    "Full_Code_Notebook.ipynb", "Full_Code_Notebook.html", "SETUP_REPORT.txt",
     "requirements-notebook.txt", "requirements-notebook.lock.txt",
     "backend_files/app.py", "backend_files/rag_utils.py", "backend_files/policy_retrieval.py",
     "backend_files/deployment_manifest.json", "backend_files/.dockerignore",
