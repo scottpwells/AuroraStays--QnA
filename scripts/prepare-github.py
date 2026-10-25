@@ -17,7 +17,7 @@ OUTPUT = ROOT / ".cache/notebook/codespaces_preparation"
 REPOSITORY = "scottpwells/AuroraStays--QnA"
 BRANCH = "codespaces-deployment"
 FILES = (
-    ".gitignore", ".devcontainer/devcontainer.json", ".github/workflows/deployment-check.yml",
+    ".gitignore", ".devcontainer/devcontainer.json", ".devcontainer/Dockerfile", ".github/workflows/deployment-check.yml",
     "compose.yaml", "DEPLOYMENT.txt", "Full_Code_Notebook.ipynb", "SETUP_REPORT.txt",
     "requirements-notebook.txt", "requirements-notebook.lock.txt",
     "backend_files/app.py", "backend_files/rag_utils.py", "backend_files/policy_retrieval.py",
