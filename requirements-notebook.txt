@@ -26,3 +26,6 @@ uv==0.13.5
 # Local verification of the notebook's backend deployment section.
 flask==3.1.3
 Werkzeug==3.1.8
+
+# Local Streamlit frontend and its AppTest checks.
+streamlit==1.64.0

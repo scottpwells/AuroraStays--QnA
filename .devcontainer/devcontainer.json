@@ -1,0 +1,24 @@
+{
+  "name": "AuroraStays policy application",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:4": {
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "remoteUser": "vscode",
+  "hostRequirements": {"cpus": 2, "memory": "8gb", "storage": "32gb"},
+  "forwardPorts": [8501],
+  "portsAttributes": {
+    "8501": {"label": "AuroraStays policy desk", "onAutoForward": "openBrowserOnce"},
+    "7860": {"label": "Backend diagnostics", "onAutoForward": "ignore"}
+  },
+  "otherPortsAttributes": {"onAutoForward": "ignore"},
+  "postCreateCommand": "python scripts/check-deployment.py",
+  "postStartCommand": "python scripts/start-codespaces.py",
+  "secrets": {
+    "OPENAI_API_KEY": {"description": "API key used only by the backend at runtime."},
+    "OPENAI_API_BASE": {"description": "API base URL matching your tested local configuration."}
+  }
+}
