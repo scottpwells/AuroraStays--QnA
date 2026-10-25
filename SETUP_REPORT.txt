@@ -6,21 +6,36 @@ The local environment and data have been prepared for a guided, cell-by-cell
 walkthrough. The notebook remains an unfinished exercise template; do not use
 Run All. API credentials have been configured and verified with small live
 generation, evaluation-model, and structured-output requests.
+Retrieval improvement is complete and re-evaluated on Data/evaluation.csv.
+The frozen configuration has now completed one held-out test evaluation.
+Cells 129, 131, and 133 contain the test results. The test set was not used
+for tuning, and the frozen code, settings, sources, and index remain unchanged.
 See the verification results below for the limits of this preparation.
 
 NOTEBOOK AND INSTRUCTIONS
 File: Full_Code_Notebook.ipynb
-SHA256: 44132619ff5bf89acc92ddd8926795ed815b5fbd6dcae98c2acf8a5250e4f0eb
+Initial SHA256: 44132619ff5bf89acc92ddd8926795ed815b5fbd6dcae98c2acf8a5250e4f0eb
 213 cells: 152 Markdown and 61 code. All instructions and code were reviewed.
 Notebook format 4.0 passes nbformat 5.10.4 validation.
 Python metadata records 3.12.10; kernelspec originally says generic Python 3.
-No notebook cells have execution counts or saved code outputs.
-The notebook's bytes and the user's pre-existing notebook edit are preserved.
+At initial review, no notebook cells had execution counts or saved outputs.
+Data Understanding, token-aware chunking, embedding loading, FAISS creation,
+sample retrieval, LLM setup, answer generation, and the evaluation-dataset
+pipeline have since been executed and their outputs saved. The held-out test
+section has also been executed once against the frozen configuration.
+Provided instructions and the user's pre-existing edit are preserved. The
+chunking/vectorstore/generation exercises are now filled. Structured paragraphs
+and labeled table rows replace the initial line-based chunks; the retrieval
+example uses local hybrid retrieval with up to four distinct policy contexts.
+The evaluation routing explanation is corrected to match the original
+two-action business rule in cell 12.
+The selected kernelspec names the project environment.
 No AGENTS.md or existing environment/dependency files were found in scope.
 
 Cell numbers here count ALL cells starting at 1, including Markdown cells.
-Empty code cells: 54 (splitter), 70 (vectorstore), 85 (LLM setup), 213.
-Cells with exercise placeholders: 50, 76, 86, 90, 95, 118, 186, 195, 203.
+Remaining empty code cell: 213.
+Remaining exercise placeholders: 186, 195, 203.
+The sample-tokenization query in cell 50 and splitter in cell 54 are complete.
 Preserve required names such as splitter, vectorstore, MODEL, TEMPERATURE,
 TOP_P, MAX_TOKENS, and K when completing the exercises.
 The template recommends preserving backend/frontend implementation snippets;
@@ -106,14 +121,13 @@ The example configuration is a template, not an operational credentials file.
 Provider access to gpt-4o-mini and gpt-4o has been verified with live requests.
 GitHub credentials and a Codespace are needed only for the later deployment.
 
-CODE ISSUES TO ADDRESS DURING THE WALKTHROUGH
-1. Cell 114 accepts temperature, top_p, and max_tokens parameters but passes
-   the global TEMPERATURE, TOP_P, and MAX_TOKENS to rag. Parameter experiments
-   can therefore ignore the function arguments unless globals also change.
-2. Cell 12 specifies AUTO ANSWER at composite >= 0.75 and MANUAL LOOKUP below
-   0.75. Cells 122-123 instead use > 0.75 and add ASSISTED REVIEW at 0.50-0.75.
-   Agree on one routing rule before interpreting results. The >= 50% automatic
-   answer rate also needs to be calculated in the business analysis.
+CODE ISSUES TRACKED DURING THE WALKTHROUGH
+1. RESOLVED: cell 114 now forwards its temperature, top_p, and max_tokens
+   arguments to rag. A check with deliberately different parameter values
+   confirms that experiments use their supplied settings.
+2. RESOLVED: cells 122-123 now follow cell 12's original two-action rule:
+   AUTO ANSWER at composite >= 0.75; MANUAL LOOKUP below 0.75. Exact-boundary
+   checks pass, and the benchmark auto-answer rate is now reported in cell 124.
 3. The production backend does retrieval and generation but does not run
    the scoring/routing stage described in cell 12. Contextual recall uses
    expected answers, which are available in benchmark data but generally
@@ -134,13 +148,20 @@ CODE ISSUES TO ADDRESS DURING THE WALKTHROUGH
    container networking and port forwarding match the deployment guide.
    Running backend app.py directly uses Flask's default port; the Docker
    command explicitly uses 7860. Requests currently have no explicit timeout.
+8. The current notebook imports policy_retrieval.py for structured chunking
+   and hybrid retrieval. The later backend snippets still use their original
+   retrieval implementation. Align the backend and include this module when
+   reaching deployment so that it matches the evaluated notebook behavior.
 
 PUBLIC RESOURCES AND DEPLOYMENT VERSION CHECKS
 HarishMaths/Hotel-Policy-Embedding is public and ungated. Metadata identifies
-Sentence Transformers / BERT, transformers 5.16.1, and a 512-position limit.
+Sentence Transformers / BERT, transformers 5.16.1, and an architectural capacity
+of 512 positions. The downloaded tokenizer reports model_max_length = 128;
+chunking respects that smaller operational limit, including special tokens.
 Observed model revision: 3c9f67da8057fb1e9f742c9e6680d5a4b33b4dcd.
 Chunk sizing must account for special tokens within the model's actual limit.
-Model weights have not been downloaded or executed during preparation.
+Embedding-model weights and tokenizer files are cached. The actual CPU-loaded
+SentenceTransformer confirms a 128-token sequence limit and 384 dimensions.
 
 Both Dockerfiles use python:3.13.15-slim, a separate Linux deployment runtime
 from the notebook's Python 3.12.10. The exact Docker tag exists for linux/amd64.
@@ -180,9 +201,435 @@ API tests completed October 24, 2026 (America/Chicago). Maximum output tokens
 were capped at 32, 32, and 64 respectively, with automatic retries disabled.
 Sanitized test results: .cache/audit/api-smoke.json.
 
-Not performed: full Docling conversion, model-weight download/loading,
-RAG answers against the hotel documents, benchmark evaluation, application
-serving, GitHub writes, or deployment. These remain for the step-by-step work.
+DATA UNDERSTANDING COMPLETED
+Executed notebook cells 20, 25, 27, 30, 33, 36, 37, and 41 in the project
+kernel. Imports, file-path setup, Docling conversion, the Markdown preview,
+and the table previews completed without error outputs. No original cell
+sources or instructions were changed during that section.
+
+Converted 4 PDFs containing 19 pages and extracted 26 tables:
+  Room and property information: 5 pages, 7 tables.
+  Refunds and additional charges: 4 pages, 6 tables.
+  Guest conduct/accessibility/resolution: 5 pages, 7 tables.
+  Booking terms and cancellation: 5 pages, 6 tables.
+The Markdown exports contain 50,274 characters in total. Page counts match
+the source PDFs, and all unique numeric values in native PDF text are present
+in the corresponding Markdown exports. This is a content sanity check rather
+than a full semantic evaluation of the extraction.
+
+Outputs are saved directly in Full_Code_Notebook.ipynb. Structured Docling
+documents and text exports are cached under .cache/notebook/documents/;
+manifest.json records source hashes and the extraction counts. A pre-execution
+notebook backup is under .cache/notebook/. The execution kernel was shut down
+after saving; cached documents can restore state for the next guided step.
+
+TOKEN-AWARE CHUNKING COMPLETED
+Historical baseline: the 83-chunk results below describe the first completed
+chunking step. They are superseded by RETRIEVAL IMPROVEMENT COMPLETED below.
+Original artifacts are preserved in
+.cache/notebook/retrieval_improvement/baseline/chunks/.
+Executed cells 47, 50, 54, 56, 59, and 62. Filled the sample query in cell 50,
+defined splitter in cell 54, and added compact export/token validation in cell 56.
+All other cell sources and the notebook's 213-cell structure are preserved.
+
+The embedding model's actual tokenizer has a 128-token input limit and adds
+2 special tokens. The RecursiveCharacterTextSplitter uses that tokenizer to
+count content tokens without truncation: cap 120, overlap target 24. It prefers
+Docling line boundaries (paragraphs and table rows), then sentences, words,
+and characters for oversized content. This avoids a heading-only chunk found
+with paragraph-first splitting.
+
+Final result: 83 chunks, each with its original source PDF metadata:
+  Room and property information: 22 chunks.
+  Refunds and additional charges: 18 chunks.
+  Guest conduct/accessibility/resolution: 22 chunks.
+  Booking terms and cancellation: 21 chunks.
+Content sizes range from 53 to 120 tokens. The largest model input is 122
+tokens including special tokens, below the tokenizer's 128-token limit.
+
+Docling's compact table export removes padding and shortens divider lines;
+the words and numbers remain in the same order as the original export.
+Source-span checks confirm complete content coverage. No chunks contain only
+formatting or headings, and every source PDF is represented.
+
+Overlap is a target, not an exact sliding window: the 79 adjacent chunk pairs
+have 0-24 tokens of overlap; 42 pairs have zero overlap at natural boundaries.
+Retrieval quality remains to be measured during later evaluation.
+
+Chunk previews, metadata, and per-source token statistics are saved in the
+notebook. Cached chunks: .cache/notebook/chunks/chunks.jsonl. Validation and
+source hashes: .cache/notebook/chunks/summary.json. No paid API calls were made
+for this step. The temporary execution kernel was shut down after saving.
+
+EMBEDDING MODEL AND FAISS COMPLETED
+Historical baseline: this section records the original 83-vector index and
+its retrieval limitations. Original files are preserved in
+.cache/notebook/retrieval_improvement/baseline/faiss_index/.
+The current 139-vector checkpoint is documented in the improvement section.
+Executed cells 66, 70, 73, and 76 using the project kernel. Filled vectorstore
+creation in cell 70 and the retrieval example in cell 76. The embedding and
+retrieve function sources are preserved, including retrieve's default k=2.
+All 213 notebook cells and the earlier step outputs are retained.
+
+Loaded HarishMaths/Hotel-Policy-Embedding on CPU, with normalized embeddings.
+The loaded model produces 384-dimensional vectors and has an effective
+128-token input limit. The longest chunk input, including special tokens and
+LangChain's newline preprocessing, is 122 tokens; no chunks are truncated.
+
+FAISS.from_documents created an IndexFlatL2 with 83 vectors, one per chunk.
+All vectors are finite and have unit norm within 1e-5. All four sources and
+their exact chunk text/metadata are retained (22/18/22/21 chunks respectively).
+Squared L2 distance is used; lower is closer. With normalized vectors its
+ordering agrees with cosine similarity. These distances are not probabilities
+or measured answer confidence.
+
+Checkpoint: .cache/notebook/faiss_index/index.faiss and index.pkl.
+Validation details and file hashes: .cache/notebook/faiss_index/summary.json.
+The freshly generated checkpoint was reloaded locally and returned the same
+retrieval content, metadata, and scores. An exact-chunk self-query also found
+the matching indexed content at effectively zero squared L2 distance.
+Only files generated by this run were deserialized for this verification.
+The repeatable execution helper is scripts/run-vectorstore.py.
+
+Sample query: What are the pet fees at ASH-CHI Loop?
+Quality finding: default k=2 returns duplicate Atlanta/Boston table excerpts
+from different source PDFs and misses Chicago. The first Chicago fee row
+ranks fourth; k=4 includes $50 per night and the $150 stay cap. Cell 76 now
+displays four results and explicitly prints the failed k=2 and passed k=4
+fact checks. This is a retrieval example, not a benchmark result or proof
+that k=4 is sufficient for every query. Validate k, duplicated source content,
+and property-specific retrieval during evaluation before relying on answers.
+The standalone retrieve function keeps its k=2 baseline. The subsequent
+generation step now uses k=4 by default in rag and explicitly in its example.
+
+No paid API requests were made for this step. Model inference is local, and
+the temporary notebook kernel was shut down after saving the outputs.
+
+LLM SETUP AND ANSWER GENERATION COMPLETED
+Executed cells 82, 85, 86, 90, 93, 95, and 96 using the project kernel.
+Filled LLM setup in cell 85, connectivity query in cell 86, grounding rules
+in cell 90, and the RAG example in cell 95. Cell 93 now defaults to k=4,
+validates that a vectorstore was supplied, and uses the configured API endpoint
+with bounded timeout/retries. All other cell sources and earlier outputs
+are retained. The notebook still has 213 cells.
+
+Settings: MODEL=gpt-4o-mini, TEMPERATURE=0.0, TOP_P=1.0, MAX_TOKENS=512, K=4.
+Credentials are loaded by the existing cell 82 from ignored config.json.
+Both the standalone LLM and rag use that configured key and endpoint, a
+60-second timeout, and max_retries=0. No credential values are printed.
+Settings were checked against the installed langchain-openai 1.6.1 client and
+the official OpenAI Chat Completions reference listed below. That client maps
+its max_tokens setting to the API's max_completion_tokens field.
+
+The generation function retains the notebook's original User Query / Retrieved
+Policy Information / Rules / Answer prompt structure. The completed rules
+require facts from the retrieved excerpts, exact property matching, preserved
+fee units/caps/conditions, and citations to the chunk supporting the claim.
+Missing or conflicting facts should lead to an explanation and a request to
+verify the current property profile or contact the property team. generate
+returns the model message; rag returns its answer text and retrieved excerpts.
+The supplied context retains the four FAISS results and their source metadata.
+
+PASS connectivity: the live model returned exactly "LLM is ready."
+PASS end-to-end RAG: the Chicago question retrieved the fee row and returned
+"$50 per night" with a "$150 per stay" cap, citing
+Data/aurorastay_refunds_and_additional_charges_guide.pdf, the supporting chunk.
+PASS missing-context behavior: given no excerpts and a question about a
+complimentary helicopter transfer schedule, the model said the information
+could not be found and requested verification with the property/profile.
+The final positive and negative responses both completed with finish_reason
+"stop"; the provider reported gpt-4o-mini-2024-07-18. These are small behavior
+checks, not faithfulness/recall/precision/relevancy benchmark scores.
+
+Sanitized answers, retrieved context, checks, and available token usage:
+.cache/notebook/generation/summary.json. Ten small live requests were made
+across prompt checks and the final successful responses, each capped at 512
+output tokens, with automatic retries disabled. Earlier diagnostic results
+are retained in that cache directory. The negative-answer checker was adjusted
+to recognize the model's valid "could not find" wording; existing live outputs
+were revalidated offline without sending another API request.
+
+Repeatable helper: scripts/run-generation.py. A normal run makes three live
+requests; --reuse-connectivity retains the previous successful connectivity
+probe and sends the two answer checks. The helper verifies source/chunk/index
+hashes before restoring the existing FAISS checkpoint. No model/API keys are
+embedded in the notebook. The temporary kernel was shut down after saving.
+
+EVALUATION DATASET BASELINE COMPLETED
+Historical baseline: original scores and contexts are preserved under
+.cache/notebook/retrieval_improvement/baseline/evaluation/.
+The canonical .cache/notebook/evaluation/ now contains the improved run.
+Executed cells 101, 105, 106, 110, 114, 118, 122, and 124. Completed the
+experiment settings in cell 118; corrected parameter forwarding in cell 114
+and the score/routing conversion in cell 122. Updated Markdown cell 123 to
+match the original business rule. Cells 101/110 and the generation sources
+are preserved. All 213 cells and outputs from earlier stages are retained.
+
+Dataset: Data/evaluation.csv, all 10 rows, with no ground-truth answers passed
+to the generator. Ground-truth contexts are split on <> for LLMTestCase.
+Generator: gpt-4o-mini, k=4, temperature=0.0, top_p=1.0, max_tokens=512.
+Judge: gpt-4o, temperature=0.0, max_tokens=1024, 60-second request timeout.
+The provider reported gpt-4o-2024-08-06 for scoring. Installed DeepEval 4.2.2
+successfully scored all 40 question/metric pairs using the supplied GEval
+criteria, evaluation steps, and original four thresholds.
+
+Mean score / target / passing questions:
+  Faithfulness:          0.938308 / 0.85 / 9 of 10.
+  Contextual Recall:     0.688131 / 0.80 / 5 of 10.
+  Contextual Precision:  0.610496 / 0.75 / 5 of 10.
+  Answer Relevancy:      0.829272 / 0.75 / 8 of 10.
+Mean composite: 0.788394.
+AUTO ANSWER by the offline composite rule: 7/10 (70%); >= 50% target met.
+MANUAL LOOKUP: 3/10. Only 4/10 questions passed all four metric thresholds.
+The individual thresholds apply to each question; the averages are reported
+alongside the pass counts, not as a replacement for them.
+
+The run completed correctly, but retrieval recall and precision fall below
+their targets. The weakest retrieval examples are:
+  - ASH-SEA Pike breakfast/parking: recall 0.0234, precision 0.1365. Retrieved
+    chunks concern other properties and omit the Seattle policy row.
+  - Midnight noise complaint: recall 0.1155, precision 0.2190. The retrieved
+    context lacks quiet hours and the specific disturbance-handling procedure.
+  - ASH-MIA Brickell pet fee plus Advance Purchase refund: recall 0.6802.
+    Retrieved context covers the rate restriction but misses the pet-fee row.
+Repeated matrix excerpts and incomplete coverage remain retrieval concerns.
+
+These are LLM-judge estimates from one small baseline. The 70% composite route
+rate does not establish that 70% of answers are correct or production-ready.
+For example, the Chicago check-in answer gives general ranges rather than the
+specific property times, despite being marked AUTO ANSWER by the composite.
+The judge's faithfulness explanation for the noise question also penalizes
+an omission; review judge calibration as well as retrieval/answer completeness
+before interpreting the scores as independent measures of those criteria.
+An unsupported Austin North pool/cabana question was appropriately declined,
+although its unrelated retrieved context scored poorly on precision.
+
+Artifacts under .cache/notebook/evaluation/:
+  scores.csv: all questions, four scores, composite, route, generated/expected answers.
+  metric_summary.csv and summary.json: aggregate scores and pass/routing counts.
+  test_cases.json and results.json: generated cases, contexts, and judge reasons.
+  validation.json and run_manifest.json: dataset/index checks and run provenance.
+  generated_answers.json and progress.json: resumable generation and request counts.
+  deepeval/: native detailed DeepEval run export.
+The results are also displayed in the notebook. These cache artifacts are
+excluded from Git. No new dependency versions or credentials were required.
+
+The baseline used exactly 51 live requests: 10 generation requests, 40 metric
+requests, and one judge connectivity check. SDK retries were disabled and
+DEEPEVAL_RETRY_MAX_ATTEMPTS was set to 1. Scoring ran sequentially, errors were
+not ignored, and the raw result contains all 40 finite scores with no errors.
+The guided runner used DeepEval's local-run flag; no results were uploaded to
+Confident AI. All source/index hashes match the preceding stage. The temporary
+kernel was shut down after saving. No evaluation/test datasets were modified.
+
+scripts/run-evaluation.py evaluates the current retriever. --resume checks the run
+fingerprint, reuses saved generation results and DeepEval metric cache, and
+retains an already successful connectivity check. A fresh run incurs API usage.
+Checks cover parameter forwarding/context splitting, the 0.75 routing boundary,
+complete question/result alignment, score ranges, and preserved notebook state.
+
+RETRIEVAL IMPROVEMENT COMPLETED
+Updated notebook cells 54, 56, 57, 62, 72, 73, 74, 76, 85, and 118.
+Cells 85 and 118 have explanatory comment changes only. The generation prompt,
+generation parameters, four judge definitions, thresholds, composite weights,
+and routing rule were preserved for the comparison. No additional libraries
+were installed. All 213 cells and unrelated earlier outputs are retained.
+
+Reusable implementation: policy_retrieval.py.
+Chunking now retains complete policy paragraphs and individually labeled table
+rows, with section headings and full parent context. Repeated property rows
+are indexed once and retain all source paths. Separately applicable clauses
+under different headings are kept. Oversized paragraphs are split for the
+embedding model but their complete parent text is restored for generation.
+Malformed table rows fail validation rather than silently losing values.
+
+The structured build extracted 169 policy items, including 89 table rows,
+and collapsed 30 duplicate items into 139 unique parents/embedding chunks.
+All four source PDFs remain represented. Actual content lengths are 4-99
+tokens; maximum model input is 101, including two special tokens, within the
+128-token model limit. The 120-token cap and 24-token overlap target remain.
+FAISS is still normalized IndexFlatL2, now with 139 vectors of 384 dimensions.
+The original 83-vector baseline uses different chunk boundaries; the increase
+to 139 is not an increase in policy content or an additional data source.
+
+Retrieval combines BM25 lexical ranking with FAISS dense ranking using weighted
+reciprocal rank fusion: lexical weight 0.75, dense weight 0.25, rank constant
+60. Property codes and requested rate plans constrain candidates. Shared domain
+vocabulary connects terms such as loud/quiet/noise. Parent deduplication and
+novelty selection reduce repeated evidence. Refund queries also preserve the
+separately documented manager-approval exception. Up to K=4 relevant contexts
+are returned; slots are not padded with unrelated excerpts.
+Only policy documents and the input question are used by retrieval; expected
+answers are not supplied to the retriever or answer generator.
+
+Local checks confirm the previously missed Chicago times, Miami pet fee,
+Seattle breakfast/parking, quiet hours/complaint handling, flexible-cancellation
+deadline, and late-refund approval conditions are now retrieved. These six
+checks use evaluation questions; they are development checks, not held-out
+evidence of generalization. No held-out questions or answers were inspected.
+
+The improved run used the same ten evaluation questions and original settings:
+  Generator: gpt-4o-mini, temperature 0, top_p 1, max_tokens 512, K=4.
+  Judge: gpt-4o, temperature 0, max_tokens 1024.
+  Metric                 Baseline mean  Improved mean  Target  Passing before/after
+  Faithfulness           0.938308       0.988731       0.85    9/10 -> 10/10
+  Contextual Recall      0.688131       0.936434       0.80    5/10 -> 10/10
+  Contextual Precision   0.610496       0.808777       0.75    5/10 ->  8/10
+  Answer Relevancy       0.829272       0.964307       0.75    8/10 -> 10/10
+  Mean composite         0.788394       0.934781
+  Pass all four metrics  4/10           8/10
+  Offline AUTO ANSWER    7/10 (70%)     10/10 (100%)
+
+All four averages now exceed their targets. Two questions still fail contextual
+precision, so mean success does not mean every question passes every metric.
+All 40 raw judge scores, CSV values, aggregates, and routes were independently
+checked for agreement, alignment, valid ranges, and absence of metric errors.
+The current answers provide the specific Chicago times, Seattle parking price,
+Miami pet fee, and noise-handling details missed by the baseline.
+
+Limitations: these are ten development examples scored by an LLM judge. They
+do not establish production accuracy or held-out performance. The Miami answer
+still describes Advance Purchase as non-refundable without explaining approved
+exception conditions that are present in its retrieved context. Generator
+completeness and judge calibration remain concerns despite higher scores.
+The offline AUTO ANSWER count is a composite rule, not proven answer correctness
+or a live confidence mechanism. The separate production-routing issue above
+also remains unresolved.
+
+Verification completed:
+  - Nine offline regression tests passed, including adversarial dense ranking,
+    unrelated queries, duplicate provenance, flexible versus Advance Purchase
+    selection/comparison, full-condition restoration, and malformed tables.
+  - All source/chunk/index integrity checks and normalized-vector checks passed.
+    Save/reload results match, and exact-chunk self-search finds distance zero.
+  - All ten scored contexts were reproduced exactly with the frozen retriever.
+    A final rate-plan comparison fix was verified locally without paid regrading:
+    it does not alter any context from the scored ten evaluation questions.
+  - The original scoring fingerprint and index-build module hash are preserved
+    separately from the frozen current module hash, recording this provenance.
+  - Notebook schema, changed-cell syntax, unchanged judge/prompt/routing sources,
+    absence of notebook error outputs, and credential scans passed.
+  - Held-out cells 129, 131, and 133 remain unchanged and unexecuted.
+
+The successful improved evaluation used exactly 51 live requests: 10 generation,
+40 metrics, and one judge connectivity check. An earlier attempt failed a local
+retrieval preflight before any paid requests. Local chunking, retrieval probes,
+regressions, replay, and final audits made no paid requests. DeepEval results
+remain local and were not uploaded to Confident AI. Temporary execution kernels
+were shut down. No evaluation/test dataset contents or dependency pins changed.
+
+Current artifacts:
+  .cache/notebook/chunks/: structured chunks, coverage and token audit.
+  .cache/notebook/faiss_index/: current 139-vector checkpoint and file hashes.
+  .cache/notebook/evaluation/: current answers, scores, judge reasons and provenance.
+  .cache/notebook/retrieval_improvement/baseline/: original notebook/index/results.
+  .cache/notebook/retrieval_improvement/comparison.csv and comparison.json:
+    metric changes, passing counts, unchanged settings and remaining limitations.
+  .cache/notebook/retrieval_improvement/retrieval_checks.json: six evidence checks.
+  .cache/notebook/retrieval_improvement/frozen_config.json: current code/cell/source/
+    index hashes, model/settings, and ten-context replay confirmation.
+  .cache/notebook/retrieval_improvement/final_audit.json: final offline verification.
+The prepare-retrieval.py helper and candidate files at the improvement directory
+root retain earlier local prototypes. The canonical chunks/index above and
+frozen_config.json identify the final scored configuration.
+
+At the end of the improvement stage, the next step was a single held-out run.
+That run is now complete as documented below; no further tuning was performed.
+
+HELD-OUT TEST EVALUATION COMPLETED
+Executed cells 129, 131, and 133 against Data/test.csv, all ten rows, using
+the previously frozen retrieval configuration. The test questions have no
+exact text duplicates in Data/evaluation.csv (case/whitespace normalized).
+The split contains only ten questions; this check does not establish broader
+semantic independence or production representativeness.
+
+Cell 129 now identifies the held-out data correctly in its comment. Cell 131
+uses the same generation/scoring settings and sequential, bounded API calls
+as the development evaluation, with separate resumable results and judge cache.
+Cell 133 displays and exports the scores, aggregates, pass counts and routes.
+No retrieval/generator/judge/threshold/routing sources or parameters changed.
+Only these three cells changed in this stage. All other cells, development
+results, policy data, dependency pins, and credentials were preserved.
+
+Settings: gpt-4o-mini, temperature 0, top_p 1, max_tokens 512, K=4;
+judge gpt-4o, temperature 0, max_tokens 1024. The provider reported
+gpt-4o-2024-08-06 for judging. The normalized 139 x 384 FAISS index is unchanged.
+
+Metric                 Development mean  Held-out mean  Target  Held-out passes
+Faithfulness           0.988731          0.995058       0.85    10/10
+Contextual Recall      0.936434          0.958115       0.80    10/10
+Contextual Precision   0.808777          0.828548       0.75     8/10
+Answer Relevancy       0.964307          0.914262       0.75     9/10
+Mean composite         0.934781          0.936361
+Pass all four metrics  8/10              8/10
+Offline AUTO ANSWER    10/10 (100%)       10/10 (100%)
+MANUAL LOOKUP          0/10              0/10
+
+All four held-out averages exceed their targets. Eight of ten questions pass
+every individual metric. These are similar aggregate results to the development
+set, but the small sample and LLM judge do not establish production readiness
+or statistically reliable superiority/generalization.
+
+Remaining findings, recorded without changing or rerunning the frozen system:
+  - Accessible King: precision 0.6900 and answer relevancy 0.5659, below target.
+    The answer is vague about accessible features and should emphasize checking
+    the requested feature against the live room/property profile. The judge
+    asks for bathroom/layout details not specified in the expected answer;
+    treat that as a calibration concern rather than inventing feature claims.
+  - Atlanta/Miami parking: precision 0.7457, slightly below target, because
+    Boston and Denver rows also appear. The generated $28 self-parking and
+    $55 valet amounts match the expected Atlanta/Miami values.
+  - Manual review found missing conditions despite passing scores: the Miami
+    breakfast answer says it is not free without checking rate-plan inclusion;
+    the Denver late-checkout answer does not explicitly say to record approval
+    and its fee. High faithfulness alone does not measure answer completeness.
+  - All ten cases route AUTO ANSWER by the prescribed composite rule, including
+    the Accessible King case that fails two metrics. The route is not evidence
+    of calibrated correctness, and the earlier production-routing concern remains.
+
+Integrity/audit results:
+  PASS frozen retrieval module, all frozen notebook sources, source PDF hashes,
+       index hashes, and the configured endpoint/evaluation fingerprint.
+  PASS all 40 finite metric scores, no metric errors, and exact alignment of
+       raw results, generated cases, original test rows, CSVs and aggregates.
+  PASS all ten composites/routes independently recomputed, including pass counts.
+  PASS all other notebook cells and development-result files unchanged.
+  PASS notebook schema, absence of error outputs, and credential scan.
+  PASS results retained locally; no uploads to Confident AI.
+
+Exactly 51 live requests were made: ten answer-generation requests, forty
+metric requests, and one judge connectivity request. Retries were disabled.
+A notebook-source normalization error stopped the first startup before any
+API requests. After scoring, a display-function typo was corrected and the
+summary rebuilt solely from saved results. The ten answers, forty scores,
+and request ledger were hash-verified unchanged during that correction; no
+model/API requests were repeated. These corrections are recorded in the run
+manifest. Execution kernels were shut down after saving.
+
+Artifacts under .cache/notebook/test_evaluation/:
+  scores.csv: each question, generated/expected answers, four scores and route.
+  summary.json and metric_summary.csv: mean scores, pass counts and route totals.
+  test_cases.json and results.json: contexts, answers, raw scores and judge reasons.
+  development_comparison.csv/json: same-settings comparison with development scores.
+  validation.json and final_audit.json: independent verification and limitations.
+  run_manifest.json: frozen snapshot reference, input/output hashes and run history.
+  generated_answers.json, progress.json and deepeval-cache.json: completed work.
+  before-test-execution.ipynb: notebook immediately before the test execution.
+
+The frozen_config.json file remains the unchanged PRE-TEST snapshot; its
+test_set_read_or_executed=false records the state when freezing, not the state
+after this run. The test summary/manifest now record the completed evaluation.
+The earlier improvement/baseline artifacts retain their historical test-unused
+flags. Do not overwrite those historical records or retune against this test set.
+
+Repeatable runner: scripts/run-test-evaluation.py. It rejects a second fresh
+run and rejects resuming an already-complete run. For interruptions, --resume
+checks the fingerprint and reuses saved work; when all raw scores are saved,
+it restores scores for summary only without loading or calling either model.
+No additional dependency installation was needed.
+
+Notebook evaluation work is complete. Application serving, GitHub writes, and
+deployment remain later guided steps; none were executed in this stage.
 
 HOW TO BEGIN
 From a PowerShell terminal in this project folder:
@@ -191,7 +638,13 @@ Open the local URL printed by JupyterLab and select kernel:
   AuroraStays (Python 3.12.10)
 In VS Code, open the notebook and select that kernel or the interpreter:
   .venv\Scripts\python.exe
-Start the guided work at cell 20 (imports); cell 18 is already installed.
+Imports, Data Understanding, chunking, FAISS, generation, baseline evaluation,
+retrieval improvement, and the held-out test are complete. Review saved test
+results in cells 129-133. The frozen configuration was evaluated once and the
+test set was not used for tuning. Avoid rerunning it for further tuning.
+On a fresh manual kernel,
+earlier cells must be run again to populate in-memory variables; cached
+documents, chunks, and FAISS are available for guided state restoration.
 
 To repeat the offline environment/data checks:
   .\.venv\Scripts\python.exe -u scripts/verify-environment.py
@@ -199,6 +652,24 @@ To restore the same dependency set (requires network access):
   .\scripts\setup-environment.ps1
 To repeat the three small live API tests (consumes API usage):
   .\.venv\Scripts\python.exe -u scripts/test-api.py
+To repeat the generation notebook section and its three live checks:
+  .\.venv\Scripts\python.exe -u scripts/run-generation.py
+To run a fresh evaluation with the current checkpoint (51 live requests):
+  .\.venv\Scripts\python.exe -u scripts/run-evaluation.py
+To rebuild structured chunks/FAISS and evaluate (51 live requests):
+  .\.venv\Scripts\python.exe -u scripts/run-evaluation.py --rebuild-retrieval
+To resume the same evaluation run using saved work:
+  .\.venv\Scripts\python.exe -u scripts/run-evaluation.py --resume
+To verify all ten scored contexts and freeze the current configuration offline:
+  .\.venv\Scripts\python.exe -u scripts/verify-retrieval.py
+To run the nine retrieval regressions offline:
+  .\.venv\Scripts\python.exe -m unittest discover -s tests -v
+Held-out runner (already complete; a new run is rejected):
+  .\.venv\Scripts\python.exe -u scripts/run-test-evaluation.py
+To resume interrupted held-out work only (not an already-complete run):
+  .\.venv\Scripts\python.exe -u scripts/run-test-evaluation.py --resume
+To repeat the saved test-result audit/comparison offline with no API calls:
+  .\.venv\Scripts\python.exe -u .cache/audit_test_evaluation.py
 
 PRIMARY REFERENCES
 Exact release metadata: https://pypi.org/pypi/<package>/<version>/json
@@ -211,3 +682,19 @@ Model metadata: https://huggingface.co/api/models/HarishMaths/Hotel-Policy-Embed
 Docker tag metadata: https://hub.docker.com/v2/repositories/library/python/tags/3.13.15-slim
 OpenAI Chat Completions reference:
 https://developers.openai.com/api/reference/python/resources/chat/subresources/completions/methods/create
+Tokenizer input limits and special tokens:
+https://huggingface.co/docs/transformers/main_classes/tokenizer
+LangChain text splitter API:
+https://reference.langchain.com/python/langchain-text-splitters/base/TextSplitter
+DeepEval evaluation configuration:
+https://deepeval.com/docs/evaluation-flags-and-configs
+DeepEval GEval:
+https://deepeval.com/docs/metrics-llm-evals
+OpenAI structured model outputs:
+https://developers.openai.com/api/docs/guides/structured-outputs
+FAISS distances and normalized-vector similarity:
+https://github.com/facebookresearch/faiss/wiki/MetricType-and-distances
+Reciprocal rank fusion:
+https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking
+OpenAI Docs: held-out testing and LLM-judge alignment (methodology, not API changes):
+https://developers.openai.com/cookbook/examples/evaluation/building_resilient_prompts_using_an_evaluation_flywheel
