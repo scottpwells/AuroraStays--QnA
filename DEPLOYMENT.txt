@@ -1,0 +1,86 @@
+AuroraStays GitHub / Codespaces deployment
+
+Repository: https://github.com/scottpwells/AuroraStays--QnA
+Deployment branch: codespaces-deployment
+
+1. Review the deployment pull request. To try it before merging, select the
+   codespaces-deployment branch on GitHub, then Code > Codespaces > New with
+   options. Use .devcontainer/devcontainer.json and a machine with at least
+   2 CPU cores and 8 GB RAM. The devcontainer requests at least 32 GB storage.
+   An existing Codespace can be used instead: save any work, switch to the
+   deployment branch, and run Codespaces: Rebuild Container.
+
+2. Configure OPENAI_API_KEY and OPENAI_API_BASE as Codespaces secrets. Use the
+   same values as your tested, ignored local config.json. Settings > Codespaces
+   > New secret lets you restrict access to this repository. The creation page
+   also recommends these names. Do not put values into source code, the
+   notebook, terminal commands, or GitHub Actions configuration. If secrets
+   already exist, retain them unless you intend to replace their values.
+   Stop and restart a running Codespace after adding or changing secrets.
+
+3. The devcontainer installs Docker Compose, GitHub CLI, and an SSH server for
+   authenticated CLI maintenance. After creation it
+   validates the frozen artifacts. After each start it runs:
+     python scripts/start-codespaces.py
+   Missing secrets leave the Codespace usable and show setup instructions.
+   With secrets available, startup builds both application images, waits for
+   health checks, and checks retrieval without sending an LLM request. The
+   first build needs network access to package registries and Hugging Face.
+
+4. In the Ports panel, open port 8501. Keep its visibility Private (the GitHub
+   default). The frontend calls http://backend:7860 on Docker's internal
+   network. The OpenAI credentials are passed only to the backend container.
+   Port 7860 is bound to loopback for diagnostics and is not auto-forwarded.
+   Asking a question in the UI consumes API usage.
+
+5. Diagnostics, from the repository root inside Codespaces:
+     python scripts/check-deployment.py
+     python scripts/smoke-deployment.py
+     docker compose -p aurorastays ps
+     docker compose -p aurorastays logs --tail 80
+   Avoid printing environment variables or an expanded Compose configuration;
+   they contain runtime credentials. Use docker compose config --quiet instead.
+
+6. To call the backend from notebook inference cells, run those cells inside
+   the Codespace with http://127.0.0.1:7860 as the backend URL. For a notebook
+   on your laptop, use an authenticated Codespaces port tunnel, for example
+   with GitHub CLI installed and signed in locally:
+     gh codespace ports forward 7860:17860 -c YOUR_CODESPACE_NAME
+   Then use http://127.0.0.1:17860. Private forwarded web URLs require GitHub
+   authentication and do not work with an unauthenticated requests.post.
+
+7. Stop the Codespace when finished to stop compute usage; stored Codespaces
+   can still consume storage allowance. Delete it when no longer needed after
+   saving and pushing your work. This setup is a development/demo environment.
+
+Artifact integrity and scope
+The checked-in FAISS index is the evaluated 139-vector, 384-dimension index.
+Its two files and policy_retrieval.py are checked against deployment_manifest.
+No model training, retrieval tuning, or held-out evaluation runs during setup.
+The application images keep their previously verified pinned requirements and
+embedding revision. The devcontainer's Python 3.12 is for workspace tools;
+the two application images retain their verified Python 3.13.15 runtime.
+The Windows notebook environment and its 245-package lock are unchanged.
+The full notebook environment is not automatically installed in Codespaces.
+
+GitHub publication from the local workspace
+  .\.venv\Scripts\python.exe scripts/prepare-github.py
+prepares and scans an explicit allowlist in .cache/notebook/codespaces_preparation.
+  .\.venv\Scripts\python.exe scripts/prepare-github.py --publish
+publishes the prepared files as one commit on codespaces-deployment and opens
+a draft pull request against the existing default branch. It uses an existing
+Git credential-manager/CLI sign-in or GH_TOKEN/GITHUB_TOKEN; it never saves the
+token. It preserves repository visibility and does not modify main.
+
+Official references
+https://docs.github.com/en/codespaces/setting-up-your-project-for-codespaces/adding-a-dev-container-configuration/introduction-to-dev-containers
+https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces
+https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace
+https://containers.dev/features
+https://docs.docker.com/compose/how-tos/startup-order/
+
+Cloud verification fixes
+The workspace Dockerfile removes the unused inherited Yarn apt source before
+features install; that source had a stale signing key. Package signature
+verification remains enabled. The UI escapes currency dollar signs so policy
+fees render as currency rather than inline math. Backend behavior is unchanged.

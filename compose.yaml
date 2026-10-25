@@ -1,0 +1,28 @@
+services:
+  backend:
+    image: aurorastays-backend:deployment
+    build: ./backend_files
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Set the OPENAI_API_KEY Codespaces secret}
+      OPENAI_API_BASE: ${OPENAI_API_BASE:?Set the OPENAI_API_BASE Codespaces secret}
+    ports:
+      - "127.0.0.1:${AURORA_BACKEND_PORT:-7860}:7860"
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:7860/', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 12
+    restart: unless-stopped
+  frontend:
+    image: aurorastays-frontend:deployment
+    build: ./frontend_files
+    environment:
+      BACKEND_URL: http://backend:7860
+      NO_PROXY: backend,localhost,127.0.0.1
+    ports:
+      - "127.0.0.1:${AURORA_FRONTEND_PORT:-8501}:8501"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

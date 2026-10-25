@@ -1,0 +1,28 @@
+name: Deployment check
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENAI_API_KEY: not-used-for-retrieval-verification
+      OPENAI_API_BASE: https://api.openai.com/v1
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the frozen deployment files
+        run: python3 scripts/check-deployment.py
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+      - name: Build and start the application
+        run: docker compose -p aurorastays up --build --detach --wait --wait-timeout 240
+      - name: Check HTTP health and policy retrieval
+        run: python3 scripts/smoke-deployment.py
+      - name: Stop verification containers
+        if: always()
+        run: docker compose -p aurorastays down
