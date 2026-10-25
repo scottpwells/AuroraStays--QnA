@@ -18,7 +18,8 @@ Deployment branch: codespaces-deployment
    already exist, retain them unless you intend to replace their values.
    Stop and restart a running Codespace after adding or changing secrets.
 
-3. The devcontainer installs Docker Compose and GitHub CLI. After creation it
+3. The devcontainer installs Docker Compose, GitHub CLI, and an SSH server for
+   authenticated CLI maintenance. After creation it
    validates the frozen artifacts. After each start it runs:
      python scripts/start-codespaces.py
    Missing secrets leave the Codespace usable and show setup instructions.
@@ -77,3 +78,9 @@ https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-acc
 https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace
 https://containers.dev/features
 https://docs.docker.com/compose/how-tos/startup-order/
+
+Cloud verification fixes
+The workspace Dockerfile removes the unused inherited Yarn apt source before
+features install; that source had a stale signing key. Package signature
+verification remains enabled. The UI escapes currency dollar signs so policy
+fees render as currency rather than inline math. Backend behavior is unchanged.

@@ -2,12 +2,18 @@
 
 import ast
 import os
+import re
 
 import requests
 import streamlit as st
 
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:7860").strip().rstrip("/")
 REQUEST_TIMEOUT = (5, 90)
+
+
+def policy_markdown(text):
+    """Display policy currency literally instead of treating dollar pairs as math."""
+    return re.sub(r"(?<!\\)\$", r"\\$", text)
 
 
 def request_answer(query, include_sources, k, temperature, max_tokens):
@@ -100,7 +106,7 @@ if result:
     st.divider()
     st.subheader("Answer")
     st.caption(result["query"])
-    st.markdown(result["answer"])
+    st.markdown(policy_markdown(result["answer"]))
     if result["include_sources"]:
         st.subheader("Supporting policy excerpts")
         if not result["chunks"]:
@@ -108,6 +114,6 @@ if result:
         for number, chunk in enumerate(result["chunks"], 1):
             content, heading, sources = policy_excerpt(chunk)
             with st.expander(heading or f"Policy excerpt {number}"):
-                st.markdown(content.replace("\n", "  \n"))
+                st.markdown(policy_markdown(content).replace("\n", "  \n"))
                 if sources:
                     st.caption("Sources: " + ", ".join(sources))
