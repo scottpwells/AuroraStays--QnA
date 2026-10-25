@@ -12,4 +12,6 @@ __pycache__/
 config.json
 Data/*
 !Data/.gitkeep
-backend_files/faiss_index/
+backend_files/faiss_index/*
+!backend_files/faiss_index/index.faiss
+!backend_files/faiss_index/index.pkl

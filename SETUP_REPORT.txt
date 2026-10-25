@@ -1,5 +1,5 @@
 AuroraStays notebook preparation
-Reviewed: October 24, 2026 (America/Chicago)
+Reviewed: October 25, 2026 (America/Chicago)
 
 STATUS
 The local environment and data have been prepared for a guided, cell-by-cell
@@ -12,8 +12,13 @@ Cells 129, 131, and 133 contain the test results. The test set was not used
 for tuning, and the frozen code, settings, sources, and index remain unchanged.
 Backend packaging is also complete: the Flask API uses the evaluated functions,
 the exported index is unchanged, and one live local HTTP/RAG check passed.
-The next guided section is the Streamlit frontend. Docker build/deployment is
-still unverified because Docker is not installed locally.
+The backend Docker image has now been built and verified locally with Docker
+Desktop, including Linux dependencies, HTTP retrieval, and one live answer.
+The Streamlit frontend and its Docker integration with the backend are also
+complete. Eight frontend tests and one live question through the container UI
+passed. Temporary verification containers/networks were removed; both images
+are retained. The GitHub/Codespaces application is now deployed and verified.
+The active URL, runtime checks and local notebook tunnel command appear below.
 See the verification results below for the limits of this preparation.
 
 NOTEBOOK AND INSTRUCTIONS
@@ -137,19 +142,19 @@ CODE ISSUES TRACKED DURING THE WALKTHROUGH
    expected answers, which are available in benchmark data but generally
    absent for new live queries. Resolve that evaluation/design distinction
    before claiming the deployed app scores every answer.
-4. PARTIALLY RESOLVED: cell 144 now exports the exact evaluated hotel-policy
-   prompt and hybrid retrieval functions. Cell 161's UI example still asks
-   about hospitalization waiting periods; correct that in the frontend step.
-5. Cell 178 imports google.colab.userdata, which is unavailable in ordinary
-   local Jupyter. Replace that token-loading step with local secure input or
-   a GITHUB_TOKEN environment variable when reaching deployment; do not try
-   to install Google Colab as a local notebook dependency.
-6. Cell 181 creates or updates a PUBLIC GitHub repository and uploads files.
-   It also catches broad exceptions as though they mean 'not found'. Review
-   the destination and exception handling before executing this later step.
-7. PARTIALLY RESOLVED: the backend now uses port 7860 for local startup and
-   Docker, with debug disabled. The frontend still needs its HTTP timeout and
-   deployment URL/networking review in the next guided step.
+4. RESOLVED: cell 144 exports the evaluated hotel-policy prompt and hybrid
+   retrieval functions. Cell 161 now uses a hotel pet-fee example rather than
+   the unrelated hospitalization example.
+5. RESOLVED: cell 178 reads an existing credential-manager/CLI sign-in or
+   environment token privately, then checks the configured existing repository.
+   No Colab package, hardcoded token, or saved credential is needed.
+6. RESOLVED: cell 181 only validates and prepares a scanned deployment bundle.
+   The explicit --publish CLI action uses an existing repository and a draft
+   deployment branch; it preserves visibility and never creates a repository
+   after an authentication/network error.
+7. RESOLVED FOR LOCAL/DOCKER: backend port 7860, frontend port 8501, configurable
+   BACKEND_URL, and a bounded frontend HTTP timeout are verified. Codespace
+   forwarded URLs and publication remain part of the later deployment setup.
 8. RESOLVED: the backend includes byte-identical policy_retrieval.py, the
    frozen index, and a deployment manifest. All 20 previously scored contexts
    were reproduced exactly through the exported backend functions.
@@ -171,7 +176,10 @@ gunicorn 26.2.0, sentence-transformers 6.1.0, and FAISS 1.15.0) resolve for
 Linux/Python 3.13.15: 95 packages. The frontend's requests 2.34.2 and Streamlit
 1.64.0 pins resolve for the same target: 37 packages. Metadata-only resolutions
 are retained in .cache/audit/. This does not prove container builds or runtime
-behavior. Docker was not detected locally; no containers were built or deployed.
+behavior. At the initial review, Docker was not detected locally and no
+containers were built. Backend container verification has since completed as
+documented below. Frontend container verification has also since completed;
+cloud deployment remains pending.
 Gunicorn is intended for that Linux environment, not this Windows notebook.
 
 The referenced course deployment documents are not present in this workspace:
@@ -688,7 +696,8 @@ x86_64 resolution succeeds with 91 binary-compatible packages and the evaluated
 embedding-runtime versions. The earlier template's unconstrained Transformers
 resolved to 5.20.2; the backend now explicitly retains notebook version 5.16.1.
 Resolution evidence: .cache/audit/backend-ready.lock.txt. This is a dependency
-resolution check, not a completed container build. Docker remains unavailable.
+resolution check, not a completed container build. Docker was unavailable at
+that stage; subsequent actual container verification is recorded below.
 
 Verification:
   PASS all 15 tests: six API/parity tests plus nine existing retrieval regressions.
@@ -715,7 +724,8 @@ run required no network/model/API calls. No evaluated retrieval code changed.
 Cell 181's future upload list now includes the new retrieval module, manifest,
 and .dockerignore so that the later repository package is complete. Cell 181
 and the GitHub authentication/deployment steps were not executed. The frontend
-section remains unexecuted and unchanged. No Docker image was built or deployed.
+section remains unexecuted and unchanged. At this preparation stage no Docker
+image had been built; that was completed in the subsequent verification below.
 
 Evidence under .cache/notebook/backend_preparation/:
   summary.json: exported-artifact hashes, 20 context matches and live HTTP answer.
@@ -730,6 +740,179 @@ the current backend audit verifies the subsequent notebook changes separately.
 Next guided step: prepare and verify the Streamlit frontend. Container build,
 GitHub publication, Codespace secrets/networking, and deployment remain pending.
 
+BACKEND CONTAINER VERIFICATION COMPLETED - OCTOBER 25, 2026
+Docker Desktop and its Linux engine are installed and running. The Docker CLI
+is available at:
+  C:\Users\scott\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe
+The CLI directory is absent from this agent session's PATH. Using its full
+path succeeds. Docker access from the restricted sandbox initially failed on
+the Docker config/engine pipe; approved execution outside the sandbox worked.
+No additional installation, Windows permission change, or Docker configuration
+change was required. scripts/verify-container.py discovers the CLI and adds its
+directory to its own child-process PATH for Docker's credential helper.
+
+Docker client/engine: 29.9.2; Docker Desktop: 4.96.3.
+Engine/image platform: linux/amd64.
+Built image: aurorastays-backend:verified.
+Image ID: sha256:7c9b738090d292139581972c0868403f3481b724be6a8b7de8357d30a6614bd0
+Reported image size: 2,449,647,248 bytes (about 2.45 GB).
+The original backend Dockerfile built successfully, including CPU PyTorch and
+the exact pinned Hugging Face model revision. No application changes were
+needed for the Linux container. The image is retained in the local Docker
+engine; it was not pushed to a registry or deployed to a cloud service.
+
+Verification used the image's actual Gunicorn application-factory command,
+one worker, and port 7860, published only on 127.0.0.1 at a temporary host port.
+No host model-cache volumes or application source mounts were supplied: the
+service used its own model/index packaged into the image.
+
+PASS Python 3.13.15 on Linux, with all thirteen direct backend requirement
+     versions checked, including CPU torch 2.14.1+cpu, Transformers 5.16.1,
+     sentence-transformers 6.1.0, FAISS 1.15.0 and NumPy 2.5.4.
+PASS pip check in the running container: no broken requirements. The actual
+     installed distribution versions (92 entries, including installer/runtime
+     packages) are recorded in the verification summary. The earlier 91-package
+     metadata resolution remains historical; it was not a full image lock.
+PASS CPU PyTorch calculation, native FAISS search data, and 139 finite,
+     unit-normalized vectors of 384 dimensions.
+PASS packaged code, manifest, requirements and index hashes match host artifacts.
+PASS the pinned model revision is cached in the image and Hugging Face runtime
+     offline flags are enabled. Gunicorn loaded its model/index successfully.
+PASS GET / returns HTTP 200.
+PASS all twenty previously scored retrieval contexts reproduced exactly through
+     container HTTP requests (ten development, ten held-out). These are parity
+     checks against saved contexts, not new generation, rescoring or tuning.
+PASS invalid queries return HTTP 400 for each of the three POST endpoints.
+PASS one live /v1/answer_with_relevant_chunks request returns HTTP 200 and
+     $50 per night, capped at $150 per stay, for ASH-CHI Loop, citing the
+     supporting refund/additional-charges source. Settings remain the evaluated
+     gpt-4o-mini defaults, with a 512-token output cap and zero SDK retries.
+PASS no API credentials in image environment metadata; config.json and .env are
+     absent from /app. Credentials were supplied by named runtime environment
+     variables, with no values in command arguments or build instructions.
+PASS frozen code/settings, source/index hashes, and saved evaluation/test
+     artifacts unchanged. No test-set scoring or parameter tuning was repeated.
+PASS the uniquely named temporary verification container was removed after
+     checks. The built image remains available; no other containers were changed.
+
+Exactly one live answer request was made for container verification. The
+remaining HTTP requests exercised root, retrieval and validation routes only.
+Evidence under .cache/notebook/container_verification/:
+  summary.json: Docker/image identity, runtime versions, file hashes, HTTP/parity
+    checks, live answer, cleanup state and preserved frozen-state confirmation.
+  container.log: sanitized Gunicorn startup/runtime log.
+  progress.json: snapshot before the single live answer request.
+Notebook Markdown cell 155 now records completed backend container verification;
+no executed notebook code or prior outputs changed during this stage.
+Earlier audit files retain their historical container-pending flags.
+
+To repeat existing-image verification without paid API calls:
+  .\.venv\Scripts\python.exe -u scripts/verify-container.py
+To build and verify, adding one bounded live answer request:
+  .\.venv\Scripts\python.exe -u scripts/verify-container.py --build --live
+In an agent sandbox, approve this script's access to Docker and local HTTP.
+To check Docker directly from a normal PowerShell terminal without relying
+on PATH:
+  & "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe" version
+No further access/setup steps are needed for the verified local Docker engine.
+At that stage frontend preparation/container verification was next; it has now
+completed below. Cloud deployment remains later guided work.
+
+FRONTEND PREPARATION AND CONTAINER VERIFICATION COMPLETED
+Executed notebook cells 159, 161, 165 and 168. The notebook remains 213 cells,
+with all earlier execution outputs, frozen model/retrieval settings, backend
+artifacts and saved development/test scores preserved. Updated the surrounding
+frontend explanations and added .dockerignore to the future GitHub upload list;
+GitHub authentication/publication cells were not executed.
+
+Prepared frontend_files/app.py, requirements.txt, Dockerfile and .dockerignore.
+The policy desk now asks a hotel-policy question, defaults to K=4, temperature=0
+and max_tokens=512, and explicitly sends gpt-4o-mini and top_p=1. Advanced
+settings retain the template's adjustable retrieval, temperature and token
+controls, while keeping the evaluated defaults. The two response modes are
+Answer only and Answer with sources.
+
+The question form submits only when Ask is pressed. Session state preserves
+the last answer across settings changes, with its original question. A failed
+new request clears the previous answer, preventing it from appearing to answer
+the new question. Supporting excerpts display policy text, section headings and
+source filenames; internal metadata representations are omitted. No confidence
+scores or automatic-routing claims are invented for live questions.
+
+BACKEND_URL is a server environment setting. The local launcher defaults to
+http://127.0.0.1:7860; the frontend image defaults to http://backend:7860 for
+the shared Docker network. API requests use a five-second connection timeout
+and a ninety-second read timeout. Timeout, connectivity, HTTP and malformed-JSON/
+response-shape failures produce concise user-facing errors, without raw
+provider/connection details. API credentials remain exclusively in the backend.
+
+Installed Streamlit 1.64.0 and ten missing dependencies locally:
+  altair 6.3.0; httptools 0.9.0; protobuf 7.36.2; pyarrow 25.0.1;
+  pydeck 0.9.3; python-multipart 0.0.32; starlette 1.10.0; toml 0.10.2;
+  uvicorn 0.54.0; watchdog 6.0.0.
+The Windows lock now records all 245 exact installed package versions, with
+all prior 234 versions preserved. uv pip check reports all compatible.
+Frontend requirements retain the original pins requests 2.34.2 and Streamlit
+1.64.0. Linux/Python 3.13.15 dependency resolution succeeds with 37 packages;
+resolution evidence: .cache/audit/frontend-ready.lock.txt.
+
+The Dockerfile copies only frontend app/requirements files, uses port 8501,
+includes a /_stcore/health check, and retains standard Streamlit XSRF settings.
+It does not copy credentials or require them at runtime. Backend service DNS
+was verified on a temporary Docker network with alias backend. The built
+frontend image is aurorastays-frontend:verified, reported size 791,536,418 bytes.
+Image ID: sha256:398f013595dc2cc8b13e487dcbd951cd642ed158ed185996f369523e5c8c8f83
+The integration reused the exact previously verified backend image ID.
+
+Verification completed:
+  PASS eight local Streamlit AppTest checks: initial defaults/no request, blank
+       question handling, default payload/timeout, source-mode/nondefault
+       forwarding, preserved answers without resubmission, clearing stale
+       answers on timeout, sanitized HTTP errors and malformed responses.
+  PASS notebook schema and four authentic frontend-cell execution outputs;
+       exported app/requirements/Dockerfile text matches the notebook cells.
+  PASS frontend image build and Python 3.13.15/Streamlit 1.64.0/requests 2.34.2
+       runtime; pip check inside the image reports no broken requirements.
+  PASS actual backend root, frontend root and frontend health HTTP 200 responses.
+  PASS Streamlit AppTest executed inside the frontend image with a real HTTP
+       connection to the backend container. Submitting the Chicago pet-fee
+       question in Answer with sources mode returns $50 per night and a $150
+       stay cap, displays source filenames, and raises no app exception.
+  PASS changing a UI setting retains the answer without resubmission: exactly
+       one backend answer request, HTTP 200, with the evaluated default payload.
+  PASS frontend runtime/image has no OPENAI_API_KEY or OPENAI_API_BASE; no
+       config.json/.env file is packaged. Host source hashes match image files.
+  PASS frozen backend, original score artifacts, earlier container-verification
+       evidence and all prior dependency versions remain unchanged.
+  PASS two uniquely named temporary containers and their private Docker network
+       removed after verification. Both local images remain available.
+
+Exactly one live API answer request was made for this frontend integration.
+The eight local AppTest checks used mocked HTTP responses and no provider
+requests. The container UI check used Streamlit's AppTest framework rather than
+browser automation; actual Streamlit HTTP/health services were checked as well.
+No held-out scoring, retrieval tuning, cloud publication or GitHub writes ran.
+
+Evidence under .cache/notebook/frontend_preparation/:
+  tests.txt: successful eight-test AppTest output.
+  summary.json: image IDs, HTTP/runtime checks, actual UI request/answer/sources,
+    rerun/no-duplicate-call confirmation and container/network cleanup.
+  final_audit.json: notebook/export, 245-package lock and frozen-state checks.
+  build.log and container logs: frontend build and temporary service logs.
+  protected_file_hashes.json: backend/frozen/scored-state preservation checks.
+  notebook and lock backups: preceding stage state.
+
+To use the app locally, start the backend in one terminal and wait for it to
+report readiness, then start the frontend in a second terminal:
+  .\.venv\Scripts\python.exe -u scripts/start-backend.py
+  .\.venv\Scripts\python.exe -u scripts/start-frontend.py
+Open http://127.0.0.1:8501. Stop each local service with Ctrl+C.
+The verification containers are no longer running.
+
+The next guided notebook section is GitHub/Codespaces setup (cell 170 onward).
+The Colab-only token loader, repository destination/visibility and exception
+handling still need review before the publication step is executed.
+
 HOW TO BEGIN
 From a PowerShell terminal in this project folder:
   .\scripts\start-notebook.ps1
@@ -742,7 +925,10 @@ retrieval improvement, and the held-out test are complete. Review saved test
 results in cells 129-133. The frozen configuration was evaluated once and the
 test set was not used for tuning. Avoid rerunning it for further tuning.
 The backend files and local verification are also complete (cells 139-154).
-Continue with Deployment - Frontend (cell 156 onwards).
+The backend Docker image has also passed actual local container verification.
+Frontend preparation and its Docker integration are complete (cells 159-168).
+GitHub/Codespaces instructions are now adapted for the existing repository
+(cells 170-187); see DEPLOYMENT.txt and the deployment section below.
 On a fresh manual kernel,
 earlier cells must be run again to populate in-memory variables; cached
 documents, chunks, and FAISS are available for guided state restoration.
@@ -763,7 +949,7 @@ To resume the same evaluation run using saved work:
   .\.venv\Scripts\python.exe -u scripts/run-evaluation.py --resume
 To verify all ten scored contexts and freeze the current configuration offline:
   .\.venv\Scripts\python.exe -u scripts/verify-retrieval.py
-To run all 15 API/retrieval regression tests offline:
+To run all API/retrieval/frontend regression tests offline:
   .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 Held-out runner (already complete; a new run is rejected):
   .\.venv\Scripts\python.exe -u scripts/run-test-evaluation.py
@@ -782,6 +968,20 @@ To execute backend packaging and one live HTTP/RAG smoke request:
   .\.venv\Scripts\python.exe -u scripts/run-backend.py --live
 To repeat the current backend artifact audit with no API calls:
   .\.venv\Scripts\python.exe -u .cache/audit_backend.py
+To verify the built backend container without paid API calls:
+  .\.venv\Scripts\python.exe -u scripts/verify-container.py
+To start the local frontend after the backend is ready:
+  .\.venv\Scripts\python.exe -u scripts/start-frontend.py
+To repeat only the eight frontend UI checks offline:
+  .\.venv\Scripts\python.exe -m unittest discover -s tests -p test_frontend.py -v
+To execute/save the four frontend notebook export cells (no API calls):
+  .\.venv\Scripts\python.exe -u scripts/run-frontend.py
+To verify the existing frontend/backend images with no paid API calls:
+  .\.venv\Scripts\python.exe -u scripts/verify-frontend.py
+To rebuild the frontend and verify one live question through its UI:
+  .\.venv\Scripts\python.exe -u scripts/verify-frontend.py --build --live
+To repeat the current frontend artifact audit offline:
+  .\.venv\Scripts\python.exe -u .cache/audit_frontend.py
 
 PRIMARY REFERENCES
 Exact release metadata: https://pypi.org/pypi/<package>/<version>/json
@@ -816,3 +1016,169 @@ Flask testing and local test clients:
 https://flask.palletsprojects.com/en/stable/testing/
 Flask/Gunicorn application-factory entrypoints and Windows limitation:
 https://flask.palletsprojects.com/en/stable/deploying/gunicorn/
+Docker container runtime, port publishing and runtime environment variables:
+https://docs.docker.com/engine/containers/run/
+Streamlit AppTest UI testing:
+https://docs.streamlit.io/develop/api-reference/app-testing/st.testing.v1.apptest
+Streamlit Docker deployment and health checks:
+https://docs.streamlit.io/deploy/tutorials/docker
+
+GITHUB/CODESPACES DEPLOYMENT SETUP - OCTOBER 25, 2026
+Configured existing repository: scottpwells/AuroraStays--QnA (public, main).
+Stored Git credential-manager sign-in has push/admin access as scottpwells.
+An existing stopped Codespace was found on main; it has no devcontainer.
+No Codespaces repository secrets existed at initial inspection.
+
+Prepared compose.yaml, .devcontainer/devcontainer.json, DEPLOYMENT.txt, and
+a deployment workflow that builds/services both images without live API calls.
+The devcontainer uses Python 3.12 for workspace scripts and Docker-in-Docker;
+the application images retain the verified Python 3.13.15 Dockerfiles. Runtime
+secrets are consumed by postStartCommand, after Codespaces exposes them.
+Frontend 8501 is the only automatically forwarded port and retains GitHub's
+private default. Backend 7860 binds loopback for authenticated diagnostics.
+A healthy backend is required before the frontend starts.
+
+Git now explicitly allows only the two manifest-verified frozen FAISS files
+in backend_files/faiss_index. Other generated/cached files remain ignored.
+scripts/prepare-github.py packages an explicit allowlist, scans for credentials,
+and can publish a single atomic commit on codespaces-deployment with a draft
+PR, preserving main and the existing visibility. It does not write local .git.
+Cell 178 checks access without saving credentials; 181 prepares the bundle.
+The original Colab screenshots remain labeled as optional legacy references.
+Private backend-tunnel guidance replaces the original public-port requirement.
+Frozen code, model, parameters, scored outputs, and local packages are unchanged.
+
+Deployment setup verification:
+PASS real Docker Compose startup using the unchanged verified application images.
+PASS both service health checks, frontend HTTP, backend HTTP, and live retrieval
+     of the Chicago pet fee ($50/night, $150/stay cap), without an LLM request.
+PASS frontend-to-backend DNS/HTTP on the private Compose network.
+PASS only loopback host bindings and no frontend API credentials.
+PASS all 77 protected application/evaluation/frozen artifacts unchanged.
+PASS temporary verification containers and project network removed.
+No package changes, paid API calls, or held-out reevaluation were required.
+Evidence: .cache/notebook/codespaces_preparation/compose-verification.json.
+
+Notebook cells 178 and 181 now perform a read-only account check and local
+bundle preparation. Publication is handled by the explicit CLI action rather
+than a notebook side effect. The planned branch is codespaces-deployment with
+a draft pull request against main. Remote publication/secrets confirmation is
+recorded locally in publication.json and codespaces-secrets.json after the
+operations complete. The existing stopped Codespace is preserved: it must
+switch to the deployment branch and rebuild, or a new Codespace can be created
+from that branch. Actual Codespaces startup and cloud inference are not yet
+verified by the successful local Compose checks.
+
+To repeat these deployment checks:
+  .\.venv\Scripts\python.exe scripts/check-deployment.py
+  .\.venv\Scripts\python.exe scripts/prepare-github.py
+Inside a started Codespace with both runtime secrets:
+  python scripts/start-codespaces.py
+  python scripts/smoke-deployment.py
+See DEPLOYMENT.txt for the private UI port and backend notebook tunnel.
+
+GITHUB PUBLICATION AND CI CONFIRMED
+Draft PR: https://github.com/scottpwells/AuroraStays--QnA/pull/1
+Branch: codespaces-deployment
+Commit: c2b66739f632824ab737ad98a7e6f8ca37d44655
+All 31 allowlisted remote files match the reviewed deployment bundle; 30
+changed relative to main. The existing public visibility and main are preserved.
+OPENAI_API_KEY and OPENAI_API_BASE were created as encrypted Codespaces
+repository runtime secrets using the tested local config. Values were not logged.
+The existing Codespace remains stopped on main; it was not restarted or rebuilt.
+
+PASS clean GitHub Actions runner: both images built from the published sources,
+Compose startup/health checks passed, frontend/backend HTTP and frozen retrieval
+passed, and the CI containers were removed. The workflow uses a dummy API key
+and made no paid LLM requests.
+Run: https://github.com/scottpwells/AuroraStays--QnA/actions/runs/40209452628
+Notebook cells 178 and 181 executed successfully with saved, sanitized outputs.
+The notebook remains 213 cells; earlier scored outputs and frozen source hashes
+are unchanged. All 245 locked installed libraries still match their versions.
+
+Create a Codespace from the prepared branch:
+https://codespaces.new/scottpwells/AuroraStays--QnA/tree/codespaces-deployment
+Or save any work in the existing Codespace, switch to codespaces-deployment,
+and run Codespaces: Rebuild Container. Open private port 8501 after startup.
+Actual Codespaces runtime and cloud inference verification remain pending.
+The local status report includes this final confirmation after publication;
+the published report is the reviewed preparation/verification snapshot.
+
+CODESPACES RUNTIME VERIFICATION COMPLETED - OCTOBER 25, 2026
+Active policy desk: https://aurorastays-policy-desk-grr9v6rpv7rhwxww-8501.app.github.dev
+Codespace editor: https://aurorastays-policy-desk-grr9v6rpv7rhwxww.github.dev
+Codespace name: aurorastays-policy-desk-grr9v6rpv7rhwxww
+Branch: codespaces-deployment
+Commit: ca0df402e39c5c5be946b4d215be24cd0681a0e3
+Machine: basicLinux32gb, 2 cores, 8 GB RAM, 32 GB storage.
+Idle timeout: 30 minutes. The verified Codespace remains running for use.
+Both application ports (8501 and 7860) have private visibility. The verified
+8501 web URL was opened in the user's browser. The temporary local test tunnel
+is closed after verification; it is not needed by the private web application.
+
+The previous Git credential-manager sign-in lacked Codespaces permission.
+GitHub CLI v2.103.2 was downloaded/checksummed under .tools, and the user
+completed its browser device authorization with the required codespace scope.
+CLI configuration is under ignored .cache/github-cli and contains no plaintext
+OAuth token. No token/key was printed or added to Git or container images.
+
+Two deployment issues were corrected on the existing draft PR branch:
+1. The Python workspace image inherited an unused Yarn apt source with a stale
+   signing key. .devcontainer/Dockerfile removes only that unused source before
+   feature installation; apt signature checks remain enabled.
+2. Streamlit treated pairs of currency dollar signs as inline math. The UI now
+   escapes unescaped dollar signs in answers and excerpts. Notebook cell 161
+   was updated and executed to keep the frontend export identical. No backend
+   generation/retrieval code or settings changed. SSH support was included for
+   maintenance and actual container inspection.
+The initial task-created Codespace was stopped, confirmed clean, and deleted
+after the corrected replacement passed. The original stopped Codespace on main
+(stunning-space-lamp-4vv4p6vr9vqh75pg) remains unchanged.
+
+PASS actual Codespaces runtime, not only local Docker or GitHub CI:
+- backend and frontend containers are running and healthy; HTTP/retrieval pass.
+- both application runtimes use Python 3.13.15; pip check passes in both.
+- backend uses CPU Torch 2.14.1+cpu, transformers 5.16.1, faiss-cpu 1.15.0,
+  langchain-openai 1.6.1 and sentence-transformers 6.1.0.
+- frontend uses Streamlit 1.64.0 and requests 2.34.2; its current file hashes
+  match the local export. It has no OpenAI credentials or config files.
+- the manifest/index/retrieval hashes match; index has 139 normalized vectors
+  of dimension 384; runtime backend secrets are present.
+- real Edge browser question returned $50/night and a $150/stay cap with policy
+  citations, literal dollar signs, no internal metadata or JavaScript errors.
+  Changing K from 4 to 3 preserved the saved answer.
+- all eight existing frontend tests passed after the currency change.
+- clean GitHub Actions build/startup/retrieval passed on the final commit:
+  https://github.com/scottpwells/AuroraStays--QnA/actions/runs/40212913431
+
+Three live smoke questions were submitted in total: one exposed the original
+currency presentation issue, one completed while the browser assertion ran
+before the Markdown text finished rendering, and the final check passed after
+adding an explicit render wait. Earlier unsuccessful browser attempts before
+form submission made no paid calls. No evaluation, test scoring, retrieval
+tuning or model changes ran. All 245 installed notebook libraries are preserved.
+Browser verification used isolated tools (Playwright 1.64.1 and checksum-verified
+portable Node 24.22.1) with the existing Edge browser, leaving the system Node
+and the notebook Python environment unchanged.
+
+Current evidence: .cache/notebook/codespaces_runtime/
+  remote-verification.json: cloud service, package, index and isolation checks.
+  final-workflow.json: successful final GitHub Actions run.
+  ports.json: private forwarding URLs/visibility.
+  browser/aurorastays-policy-desk-grr9v6rpv7rhwxww/rendering-retry-2/browser-verification.json
+  browser/aurorastays-policy-desk-grr9v6rpv7rhwxww/rendering-retry-2/cloud-ui-answer.png
+  frontend-tests.json: eight-test successful local regression run.
+  cleanup.json: superseded task-created Codespace removed without user work.
+  final-codespaces.json: active verified instance and original stopped instance.
+  final_audit.json: final integrity/credential/package/notebook audit.
+Earlier preparation audits are historical snapshots, preceding these corrections.
+
+For the NEXT local notebook inference step, run this PowerShell command in a
+separate terminal from the project folder, then leave it running:
+  $env:GH_CONFIG_DIR = Join-Path (Get-Location) '.cache\github-cli'
+  & '.\.tools\github-cli\v2.103.2\bin\gh.exe' codespace ports forward 7860:17860 -c aurorastays-policy-desk-grr9v6rpv7rhwxww
+Use http://127.0.0.1:17860 in cell 186. Stop the local tunnel with Ctrl+C when
+finished. The cloud policy desk remains available through its private web URL.
+The deployed inference notebook payload cells are the next unexecuted work.
+The local notebook/report include this final status after publication; remote
+GitHub contains the reviewed code and preceding preparation snapshot.
