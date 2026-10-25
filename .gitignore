@@ -1,0 +1,15 @@
+.venv/
+.tools/
+.cache/
+.jupyter/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.deepeval/
+.env
+.env.*
+!.env.example
+config.json
+Data/*
+!Data/.gitkeep
+backend_files/faiss_index/

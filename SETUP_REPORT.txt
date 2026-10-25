@@ -1,0 +1,213 @@
+AuroraStays notebook preparation
+Reviewed: October 24, 2026 (America/Chicago)
+
+STATUS
+The local environment and data have been prepared for a guided, cell-by-cell
+walkthrough. The notebook remains an unfinished exercise template; do not use
+Run All. API credentials have been configured and verified with small live
+generation, evaluation-model, and structured-output requests.
+See the verification results below for the limits of this preparation.
+
+NOTEBOOK AND INSTRUCTIONS
+File: Full_Code_Notebook.ipynb
+SHA256: 44132619ff5bf89acc92ddd8926795ed815b5fbd6dcae98c2acf8a5250e4f0eb
+213 cells: 152 Markdown and 61 code. All instructions and code were reviewed.
+Notebook format 4.0 passes nbformat 5.10.4 validation.
+Python metadata records 3.12.10; kernelspec originally says generic Python 3.
+No notebook cells have execution counts or saved code outputs.
+The notebook's bytes and the user's pre-existing notebook edit are preserved.
+No AGENTS.md or existing environment/dependency files were found in scope.
+
+Cell numbers here count ALL cells starting at 1, including Markdown cells.
+Empty code cells: 54 (splitter), 70 (vectorstore), 85 (LLM setup), 213.
+Cells with exercise placeholders: 50, 76, 86, 90, 95, 118, 186, 195, 203.
+Preserve required names such as splitter, vectorstore, MODEL, TEMPERATURE,
+TOP_P, MAX_TOKENS, and K when completing the exercises.
+The template recommends preserving backend/frontend implementation snippets;
+specific defects are recorded below for review before deployment.
+
+The project objective is grounded answers and reduced manual lookup/escalation,
+rather than reduced handling time. Required metrics are faithfulness >= 0.85,
+contextual recall >= 0.80, contextual precision >= 0.75, and answer relevancy
+>= 0.75. At least 50% of queries should be confidently answered. Composite
+weights are 0.35, 0.25, 0.20, and 0.20 respectively.
+
+PYTHON ENVIRONMENT
+Initially: C:\Python39\python.exe, Python 3.9.0, outside a virtual environment.
+Most notebook libraries, uv, torch, sentence-transformers, and openpyxl were
+missing. Installed pandas was 2.3.3, rather than the requested 2.2.3.
+The system pip also reported an invalid distribution named -ip. System Python
+and its packages were left unchanged.
+
+Prepared: .venv\Scripts\python.exe, CPython 3.12.10, Windows x86_64.
+The supporting interpreter is stored under .tools\python; uv 0.13.5 is under
+.tools\bin. No system Python default or Windows registry entry was changed.
+Local kernel: AuroraStays (Python 3.12.10), identifier aurorastays-312.
+Kernel specification: .venv\share\jupyter\kernels\aurorastays-312\kernel.json.
+.vscode/settings.json points to the project interpreter. An existing editor
+kernel selection may still need to be changed to the named project kernel.
+
+DEPENDENCIES AND VERSIONS
+All ten exact pins in cell 18 were retained:
+  docling                     2.126.0
+  pandas                      2.2.3
+  transformers                5.16.1
+  langchain-huggingface        1.2.2
+  langchain-text-splitters     1.1.2
+  langchain-community         0.4.2
+  faiss-cpu                   1.15.0
+  langchain-openai            1.6.1
+  deepeval                    4.2.2
+  PyGithub                    2.6.1
+
+PyPI metadata confirms these releases exist. Several require Python >= 3.10,
+so the original system Python 3.9 cannot run this dependency set.
+Added sentence-transformers 6.1.0, matching the backend's pin: it is required
+by HuggingFaceEmbeddings and is missing from the notebook's installation cell.
+The langchain-huggingface 'full' extra was not selected: its optional
+sentence-transformers < 6 constraint would conflict with the backend's 6.1.0.
+The base integration permits the explicitly installed version.
+Added requests 2.34.2, openpyxl 3.1.5, uv 0.13.5, and local notebook tooling:
+ipykernel 6.31.0, JupyterLab 4.5.7, nbformat 5.10.4, nbclient 0.10.2.
+
+requirements-notebook.txt contains the direct requirements.
+requirements-notebook.lock.txt pins all 230 resolved packages for Windows /
+Python 3.12.10. CPU-only torch 2.14.1+cpu and torchvision 0.29.1+cpu were
+resolved from the official PyTorch CPU index. Preserve --torch-backend cpu
+when recreating this environment. The lock is not a universal deployment lock.
+
+The original cell 18 assumes uv is already available and does not explicitly
+target the active interpreter. The prepared launcher adds .venv\Scripts to
+PATH. Installation has already been completed, so begin with cell 20 after
+selecting the project kernel. Do not routinely rerun the install cell: use
+the locked setup script if dependencies need to be restored. Treat genuine
+dependency conflicts as errors despite cell 19's suggestion to ignore them.
+
+DATA PREPARATION
+The four supplied PDFs, evaluation.csv, and test.xlsx were copied from the
+workspace root into Data/. Original supplied files were retained.
+PDF structure checks confirm page counts of 5, 5, 4, and 5 (19 pages total).
+Both datasets have 10 rows and the columns question, expected_answer, and
+relevant_context. The test workbook was exported to Data/test.csv without
+changing its values; the CSV was compared with the original workbook.
+This resolves the mismatch between cell 14's test.xlsx description and
+cell 129's pd.read_csv("Data/test.csv"). Ground-truth contexts use the <>
+separator expected by test_case_generator.
+
+API CONFIGURATION
+Credentials were supplied in config.example.json after the initial review.
+They were moved into config.json, the filename used by notebook cell 82;
+config.example.json was restored to placeholders. config.json is excluded
+from Git. No API key values were printed or included in this report.
+The configured OPENAI_API_BASE was used for all tests, without changing the
+provider URL or substituting models.
+The pinned ChatOpenAI code supports OPENAI_API_BASE as used by the notebook.
+The example configuration is a template, not an operational credentials file.
+Provider access to gpt-4o-mini and gpt-4o has been verified with live requests.
+GitHub credentials and a Codespace are needed only for the later deployment.
+
+CODE ISSUES TO ADDRESS DURING THE WALKTHROUGH
+1. Cell 114 accepts temperature, top_p, and max_tokens parameters but passes
+   the global TEMPERATURE, TOP_P, and MAX_TOKENS to rag. Parameter experiments
+   can therefore ignore the function arguments unless globals also change.
+2. Cell 12 specifies AUTO ANSWER at composite >= 0.75 and MANUAL LOOKUP below
+   0.75. Cells 122-123 instead use > 0.75 and add ASSISTED REVIEW at 0.50-0.75.
+   Agree on one routing rule before interpreting results. The >= 50% automatic
+   answer rate also needs to be calculated in the business analysis.
+3. The production backend does retrieval and generation but does not run
+   the scoring/routing stage described in cell 12. Contextual recall uses
+   expected answers, which are available in benchmark data but generally
+   absent for new live queries. Resolve that evaluation/design distinction
+   before claiming the deployed app scores every answer.
+4. Cell 144's generated backend prompt says 'medical insurance policies',
+   unlike the hotel-policy notebook prompt. Cell 161's UI example asks about
+   hospitalization waiting periods. These copied examples need correction
+   before deployment and the backend prompt should match the tested rules.
+5. Cell 178 imports google.colab.userdata, which is unavailable in ordinary
+   local Jupyter. Replace that token-loading step with local secure input or
+   a GITHUB_TOKEN environment variable when reaching deployment; do not try
+   to install Google Colab as a local notebook dependency.
+6. Cell 181 creates or updates a PUBLIC GitHub repository and uploads files.
+   It also catches broad exceptions as though they mean 'not found'. Review
+   the destination and exception handling before executing this later step.
+7. The frontend uses http://localhost:7860. Check that backend/frontend
+   container networking and port forwarding match the deployment guide.
+   Running backend app.py directly uses Flask's default port; the Docker
+   command explicitly uses 7860. Requests currently have no explicit timeout.
+
+PUBLIC RESOURCES AND DEPLOYMENT VERSION CHECKS
+HarishMaths/Hotel-Policy-Embedding is public and ungated. Metadata identifies
+Sentence Transformers / BERT, transformers 5.16.1, and a 512-position limit.
+Observed model revision: 3c9f67da8057fb1e9f742c9e6680d5a4b33b4dcd.
+Chunk sizing must account for special tokens within the model's actual limit.
+Model weights have not been downloaded or executed during preparation.
+
+Both Dockerfiles use python:3.13.15-slim, a separate Linux deployment runtime
+from the notebook's Python 3.12.10. The exact Docker tag exists for linux/amd64.
+The backend's pins (including Flask 3.1.3, Werkzeug 3.1.8, requests 2.34.2,
+gunicorn 26.2.0, sentence-transformers 6.1.0, and FAISS 1.15.0) resolve for
+Linux/Python 3.13.15: 95 packages. The frontend's requests 2.34.2 and Streamlit
+1.64.0 pins resolve for the same target: 37 packages. Metadata-only resolutions
+are retained in .cache/audit/. This does not prove container builds or runtime
+behavior. Docker was not detected locally; no containers were built or deployed.
+Gunicorn is intended for that Linux environment, not this Windows notebook.
+
+The referenced course deployment documents are not present in this workspace:
+Understanding Deployment; Introduction to GitHub and GitHub Codespaces;
+Creating GitHub Account and Generating Personal Access Token; Adding Secrets
+to GitHub Codespaces; Deploying Frontend and Backend on GitHub Codespaces;
+Deleting Codespace. Those documents were not independently reviewed.
+
+VERIFICATION
+PASS notebook schema and Python syntax (accounting for IPython magics).
+PASS exact top-level installed package versions.
+PASS dependency consistency: all 230 installed packages are compatible.
+PASS actual Jupyter kernel launch and code execution using .venv Python 3.12.10;
+     the temporary kernel was shut down after the check.
+PASS PDF signatures/page counts and evaluation/test dataset structure.
+PASS CSV export matches the original test workbook.
+PASS PowerShell setup/launcher syntax.
+PASS all imports from notebook cell 20 in a separate offline process.
+PASS native FAISS index creation/search with a known nearest-neighbor result.
+PASS native PyTorch CPU tensor calculation (2.14.1+cpu).
+PASS reusable environment/data preflight: zero failures.
+PASS JupyterLab command-line startup/version (4.5.7) with normal user permissions.
+The first cold library import was slow but completed successfully.
+PASS live LangChain gpt-4o-mini generation: returned API_OK.
+PASS live DeepEval gpt-4o generation: returned API_OK.
+PASS live DeepEval gpt-4o structured output: parsed the expected Pydantic schema.
+API tests completed October 24, 2026 (America/Chicago). Maximum output tokens
+were capped at 32, 32, and 64 respectively, with automatic retries disabled.
+Sanitized test results: .cache/audit/api-smoke.json.
+
+Not performed: full Docling conversion, model-weight download/loading,
+RAG answers against the hotel documents, benchmark evaluation, application
+serving, GitHub writes, or deployment. These remain for the step-by-step work.
+
+HOW TO BEGIN
+From a PowerShell terminal in this project folder:
+  .\scripts\start-notebook.ps1
+Open the local URL printed by JupyterLab and select kernel:
+  AuroraStays (Python 3.12.10)
+In VS Code, open the notebook and select that kernel or the interpreter:
+  .venv\Scripts\python.exe
+Start the guided work at cell 20 (imports); cell 18 is already installed.
+
+To repeat the offline environment/data checks:
+  .\.venv\Scripts\python.exe -u scripts/verify-environment.py
+To restore the same dependency set (requires network access):
+  .\scripts\setup-environment.ps1
+To repeat the three small live API tests (consumes API usage):
+  .\.venv\Scripts\python.exe -u scripts/test-api.py
+
+PRIMARY REFERENCES
+Exact release metadata: https://pypi.org/pypi/<package>/<version>/json
+Example: https://pypi.org/project/docling/2.126.0/
+Example: https://pypi.org/project/transformers/5.16.1/
+Example: https://pypi.org/project/langchain-huggingface/1.2.2/
+CPU wheels: https://download.pytorch.org/whl/cpu
+Model: https://huggingface.co/HarishMaths/Hotel-Policy-Embedding
+Model metadata: https://huggingface.co/api/models/HarishMaths/Hotel-Policy-Embedding
+Docker tag metadata: https://hub.docker.com/v2/repositories/library/python/tags/3.13.15-slim
+OpenAI Chat Completions reference:
+https://developers.openai.com/api/reference/python/resources/chat/subresources/completions/methods/create

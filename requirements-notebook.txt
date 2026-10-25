@@ -1,0 +1,24 @@
+# Preserve the ten package pins in notebook cell 18.
+docling==2.126.0
+pandas==2.2.3
+transformers==5.16.1
+langchain-huggingface==1.2.2
+langchain-text-splitters==1.1.2
+langchain-community==0.4.2
+faiss-cpu==1.15.0
+langchain-openai==1.6.1
+deepeval==4.2.2
+PyGithub==2.6.1
+
+# HuggingFaceEmbeddings requires this optional integration at runtime.
+# Match the version in the notebook's backend requirements (cell 151).
+sentence-transformers==6.1.0
+
+# Direct imports, Excel input support, and local notebook tooling.
+requests==2.34.2
+openpyxl==3.1.5
+ipykernel==6.31.0
+jupyterlab==4.5.7
+nbformat==5.10.4
+nbclient==0.10.2
+uv==0.13.5
